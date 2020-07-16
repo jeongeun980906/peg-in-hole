@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.5.1-0-g916b5db  Build Version: 1.5.7152.31018
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="peg.SLDPRT">
+  <link
+    name="peg">
+    <inertial>
+      <origin
+        xyz="-9.7991E-19 -0.050718 3.30887925265817E-18"
+        rpy="0 0 0" />
+      <mass
+        value="0.13013" />
+      <inertia
+        ixx="0.00012561"
+        ixy="-4.8374E-21"
+        ixz="-3.5293E-21"
+        iyy="4.4132E-05"
+        iyz="4.35281382483698E-21"
+        izz="0.00012561" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="1.5707963267949 0 0" />
+      <geometry>
+        <mesh
+          filename="package://peg/meshes/peg.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+        <texture
+          filename="package://peg/textures/" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="1.5707963267949 0 0" />
+      <geometry>
+        <mesh
+          filename="package://peg/meshes/peg.STL" />
+      </geometry>
+    </collision>
+  </link>
+</robot>
