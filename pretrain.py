@@ -79,7 +79,7 @@ action_size=7
 learning_rate = 0.0005 #0.0005
 gamma         = 0.98  #0.98
 batch_size    = 128
-alpha=0.2
+alpha=0.05
 soft_tau=0.01
 
 model1=SoftQNetwork()
@@ -216,7 +216,7 @@ def train_model():
     #for i in range(batch_size):
     #    idx = idxs[i]
     #    memory.update(idx, errors[i])
-
+    print(tree_idx,errors)
     memory.batch_update(tree_idx,errors)
 
     optimizer1.zero_grad()

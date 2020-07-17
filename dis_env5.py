@@ -24,9 +24,9 @@ class UR5_robotiq():
         else:
             self.serverMode = p.DIRECT
 
-        self.thtorque=0.01
+        self.thforce=0.01
         self.initdis=0
-        self.distance_threshold = 0.01
+        self.distance_threshold = 0.001
         self.reward_type = 'sparse'
         self.has_object = False
         # self.goal = np.array([0.13, -0.65, 1.02])
@@ -45,12 +45,8 @@ class UR5_robotiq():
         self.observation_space = 39     # Input size
         self.action_space = Box(-ACTION_RANGE, ACTION_RANGE, (4,))
 
-        self.init_pose = [0.0*Deg2Rad,
-                       -60.0*Deg2Rad,
-                        60.0*Deg2Rad,
-                        -90.0*Deg2Rad,
-                       -90.0*Deg2Rad,
-                         0.0*Deg2Rad]                              
+        self.init_pose = [-0.18269931421578223, -1.2624127482337664, 1.6356823388624389, -1.944575358530638, -1.5708127721603529, -0.44438877709013885]
+
         self.home_pose()
         p.stepSimulation()
 
@@ -117,49 +113,48 @@ class UR5_robotiq():
         self.joints, self.controlJoints = utils_ur5_robotiq140.setup_sisbot(p, self.robotID)
         for i in range(p.getNumJoints(self.robotID)):
             p.enableJointForceTorqueSensor(self.robotID,i)
+        
+        self.last=0
 
     def step(self, action):
 
         self.move(action)   #move > moveL
-
         self.next_state_dict = self.get_state()
-        rel_pose=np.asarray([self.next_state_dict[0]-self.next_state_dict[9],self.next_state_dict[1]-self.next_state_dict[10],self.next_state_dict[2]-self.next_state_dict[11]])
-        torque=[]
-        for i in range(6):
-            torque.append(self.next_state_dict[i+3])
-        torque=np.asarray(torque)
+        
+        rel_pose=np.asarray([self.next_state_dict[0]-self.next_state_dict[10],self.next_state_dict[1]-self.next_state_dict[11],self.next_state_dict[2]-self.next_state_dict[12]])
+        rel_ori=np.asarray([self.next_state_dict[3]-self.next_state_dict[13],self.next_state_dict[4]-self.next_state_dict[14],self.next_state_dict[5]-self.next_state_dict[15],self.next_state_dict[6]-self.next_state_dict[16]])
         dis_error=np.linalg.norm(rel_pose, axis=-1, ord=2)
+        ori_error=np.linalg.norm(rel_ori, axis=-1, ord=2)
+        force=[]
+        for i in range(3):
+            force.append(self.next_state_dict[i+7])
+        self.done=False
         goal=False
-        info=True
-        self.done = self.contact
-        #reward=-1
-        if (dis_error<self.distance_threshold):
-            goal=True
-        if ((dis_error)/self.initdis)>1.5:
-            self.done=True
-            info=False
-            print('outofrange')
-        reward=-(dis_error)/self.initdis
+        #self.done = self.contact
+        reward=-0.5*dis_error/self.initdis-0.5*ori_error
+        #print(reward)
+        temp=abs(sum(force))/100
+        if temp>5:
+            temp=5
+        reward=-temp
         if self.done:
             self.contact=False
             if goal:
                 reward=10.0
-            elif dis_error<0.5:
-                pass
             else:
                reward=-1.0
-        return self.next_state_dict, reward, self.done, info
+        return self.next_state_dict, reward, self.done, {}
 
 
     def reset(self):
         print('reset')
         self.home_pose()
-        self.move_init()
         self.state_dict = self.get_state()
-        temp=np.asarray([self.state_dict[0]-self.state_dict[9],self.state_dict[1]-self.state_dict[10],self.state_dict[2]-self.state_dict[11]])
+        temp=np.asarray([self.state_dict[0]-self.state_dict[7],self.state_dict[1]-self.state_dict[8],self.state_dict[2]-self.state_dict[9]])
         self.initdis=np.linalg.norm(temp ,axis=-1, ord=2)
         # # p.removeAllUserDebugItems()
         time.sleep(1)
+        print('init_pose',self.state_dict)
         return self.state_dict
 
     def home_pose(self):
@@ -177,13 +172,6 @@ class UR5_robotiq():
        
         p.stepSimulation()
 
-    def move_init(self):
-        target=[0.3+0.03*(np.random.rand()-0.5),0.03*(np.random.rand()-0.5),0.75+0.00*(np.random.rand()-0.5),0.0,0.0,0.0]
-        self.moveL(target)
-        pose=self.getRobotPose()
-        fOri = p.getLinkState(self.robotID, 6)[5]
-        self.fOri = p.getEulerFromQuaternion(fOri)
-        print('?????',pose)
 
     def moveL(self, targetPose, setTime = 0.1):
         stepSize = 240*setTime
@@ -241,38 +229,29 @@ class UR5_robotiq():
         end = time.time()
 
         # print(end-start)
-
+    
     def move(self, action,setTime=0.01):
         stepSize = 240*setTime
-        currentPose = self.getRobotPoseE()
-        delta = []
-        for i in range(3):
-            delta.append(action[i]/stepSize)
-
-        for t in range(int(stepSize)):
-            stepPos = []
-            stepOri = []
-            for i in range(3):
-                stepPos.append(currentPose[i] + (t+1)*delta[i])
-            stepOri.append(0)
-            stepOri.append(1.5707963)
-            stepOri.append(currentPose[5])
-            stepOri = p.getQuaternionFromEuler(stepOri)
-        for t in range(int(stepSize)):
+        currentPose = self.getRobotPose()
             
-            jointPos = p.calculateInverseKinematics(self.robotID,
+        stepPos=[]
+        stepOri=[]
+        for i in range(3):
+            stepPos.append(currentPose[i] + action[i])
+        stepOri.append(currentPose[3]+action[3])
+        stepOri.append(0.7011236967207826)
+        stepOri.append(-currentPose[3]-action[3])
+        stepOri.append(0.7011236967207826)
+
+        jointPos = p.calculateInverseKinematics(self.robotID,
                                                     self.eefID,
                                                     stepPos,
                                                     stepOri)
-            # pos.append(1)
-            # jointPos = urk.invKine(pos)
-            # print('---------------')
-            # print(jointPos)
-            for i, name in enumerate(self.controlJoints):
-                joint = self.joints[name]
-                targetJointPos = jointPos[i]
+        for i, name in enumerate(self.controlJoints):
+            joint = self.joints[name]
+            targetJointPos = jointPos[i]
 
-                p.setJointMotorControl2(self.robotID,
+            p.setJointMotorControl2(self.robotID,
                                         joint.id,
                                         p.POSITION_CONTROL,
                                         targetPosition = targetJointPos,
@@ -283,6 +262,8 @@ class UR5_robotiq():
             # p.addUserDebugLine((0.6475237011909485, 0.6443161964416504, 0.9296525716781616),(0,0,0))
         # for i in range(10):
             
+        
+        for _ in range(30):
             p.stepSimulation()
             # self.getCameraImage()
         #print(joint_positions)
@@ -306,51 +287,33 @@ class UR5_robotiq():
         return currentPose              
 
     def get_state(self):
-
-        # Joints states
+        object_pos = [0.6, 0.0, 0.87]
+        object_ori= [1.57079632679, 0, 0.261799333]
+        object_ori= p.getQuaternionFromEuler(object_ori)
         joint_states = p.getJointStates(self.robotID, range(p.getNumJoints(self.robotID)))
 
         joint_positions = [state[0] for state in joint_states] #  -> (8,)
         jp=np.asarray(joint_positions)
         joint_torque=[state[3] for state in joint_states]
+        ee_force=joint_states[7][2]
         torque_list=[]
         for i in range(len(self.controlJoints)):
             if i > 6:
                 break
             torque_list.append(joint_torque[self.joint.id])
-        torque=np.asarray(torque_list)
+        #print(torque_list)
+        #torque=np.asarray(torque_list)
+        ee_force=np.asarray(ee_force)
+        #print(ee_force)
         # End-Effector States
         ee_states = p.getLinkState(self.robotID, 7 , computeLinkVelocity = 1)
         ee_pos = ee_states[0]
         ee_ori = ee_states[1]
-        ee_linear_vel = ee_states[6]
+        #print(ee_ori)
         #ee_angular_vel = ee_states[7]
-        ee_ori = p.getEulerFromQuaternion(ee_ori)
-        object_pos = []
-        for i in range(3):
-            object_pos.append(self.holePos[i])
-        #object_pos[2] += 0.3
-        object_ori = []
-        for i in range(4):
-            object_ori.append(self.holeOri[i])
 
-        object_ori = p.getEulerFromQuaternion(object_ori)
-        
-        self.object_rel_pos = []
-        rel_ori=[] 
-        ee_ori[2]-object_pos[2]
-
-        for i in range(3):
-            self.object_rel_pos.append(-object_pos[i]+ee_pos[i])
-        for i in range(3):
-            rel_ori.append(ee_ori[i]-object_ori[i])    
-        self.contact = False
-        self.contact1 = p.getContactPoints(bodyA=self.robotID,bodyB=self.boxId)
-        self.contact2 = p.getContactPoints(bodyA=self.robotID,bodyB=self.tableID)
-        
-        if (self.contact1) or (self.contact2):
-            self.contact = True
-            print("collision")
+        self.contact = p.getContactPoints(bodyA=self.robotID,bodyB=self.boxId)
+        #self.contact2 = p.getContactPoints(bodyA=self.robotID,bodyB=self.tableID)
 
         # Final states
         # obs = np.concatenate([
@@ -360,13 +323,15 @@ class UR5_robotiq():
         # ])self.object_rel_pos[0],self.object_rel_pos[1],self.object_rel_pos[2],, rel_ori
         #rel_ori = object_ori[2] - ee_ori[2]
         obs_temp = np.array([
-            ee_pos[0], ee_pos[1], ee_pos[2]
+            ee_pos[0], ee_pos[1], ee_pos[2],
+            ee_ori[0],ee_ori[1],ee_ori[2],ee_ori[3],ee_force[0],ee_force[1],ee_force[2]
             ])
-        obs1=np.concatenate((obs_temp,torque),axis=None)
-        #obs2=np.concatenate((obs1,jp),axis=None)
+        #obs1=np.concatenate((obs_temp,ee_force),axis=None)
+        ##obs2=np.concatenate((obs,jp),axis=None)
 
-        obs_temp2=np.array([object_pos[0],object_pos[1],object_pos[2]])
-        obs=np.concatenate((obs1,obs_temp2),axis=None)
+        obs_temp2=np.array([object_pos[0],object_pos[1],object_pos[2], 
+            object_ori[0],object_ori[1],object_ori[2],object_ori[3]])
+        obs=np.concatenate((obs_temp,obs_temp2),axis=None)
         #print(ee_ori)
         return obs
 
@@ -374,16 +339,39 @@ class UR5_robotiq():
         return 1 / (1 + math.exp(-x))
 
     def lol(self):
-        print('ll')
-        while True:
-            for i in range(100):
-                p.setJointMotorControl2(self.robotID,
-                                        5,
-                                        p.POSITION_CONTROL,
-                                        targetPosition = i*Deg2Rad)
-                                        # targetVelocity = 5,
-                                        #force = joint.maxForce, 
-                                        #maxVelocity = joint.maxVelocity)
-                p.stepSimulation()
-                print('???')
+        object_pos=[]
+        for i in range(3):
+            if i==2:
+                object_pos.append(self.holePos[i]+0.2)
+            else:
+                object_pos.append(self.holePos[i])
+        currentPose = self.getRobotPoseE()
+        objectOri = []
+        objectOri.append(0)
+        objectOri.append(1.5707963)
+        objectOri.append(0.261799333)
+        objectOri = p.getQuaternionFromEuler(objectOri)
+        jointPos = p.calculateInverseKinematics(self.robotID,
+                                                    self.eefID,
+                                                    object_pos,
+                                                    objectOri)
+        print(jointPos)
         time.sleep(1000)
+
+    def process(self,angle):
+        if angle>1.5707963/2+1.5707963:
+            return angle-1.5707963/2-1.5707963
+        elif angle>1.5707963:
+            return angle-1.5707963
+        elif angle>1.5707963/2:
+            return angle-1.5707963/2
+        elif angle<-1.5707963-1.5707963/2:
+            return angle+1.5707963+1.5707963
+        elif angle<-1.5707963:
+            return angle+1.5707963+1.5707963/2
+        elif angle<-1.5707963/2:
+            return angle+1.5707963
+        elif angle<0:
+            return angle+1.5707963/2
+        else:
+            return angle

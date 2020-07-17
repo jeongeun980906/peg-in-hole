@@ -8,8 +8,8 @@ import itertools
 import torch
 import time
 
-from dis_env2 import UR5_robotiq
-from per_d3qn_net import DQN
+from dis_env5 import UR5_robotiq
+from net3 import DQN
 #from prioritized_memory import Memory
 from Per import *
 from matplotlib import pyplot as plt
@@ -74,11 +74,11 @@ parser.add_argument('--evaluate', type=bool, default=False,
 
 args = parser.parse_args()
 
-state_size=12
-action_size=7
+state_size=17
+action_size=9
 #Hyperparameters
 learning_rate = 0.0005 #0.0005
-gamma         = 0.98  #0.98
+gamma         = 0.5  #0.98
 batch_size    = 128
 alpha=0.2
 soft_tau=0.1
@@ -121,19 +121,23 @@ print(pose)
 def action_select(y):
 
     if y == 0 :
-        action = [0.005,0,0]
+        action = [0.001,0,0,0]
     elif  y == 1 :
-        action = [-0.005,0,0]
+        action = [-0.001,0,0,0]
     elif  y == 2 :
-        action = [0,0.005,0]
+        action = [0,0.001,0,0]
     elif  y == 3 :
-        action = [0,-0.005,0]
-    elif  y == 4 :
-        action = [0,0,0.005] 
-    elif  y == 5 :
-        action = [0,0,-0.005] 
+        action = [0,-0.001,0,0]
+    elif y==4:
+        action = [0,0,-0.001,0.00005]
+    elif y==5:
+        action = [0,0,-0.001,-0.00005]
     elif y==6:
-        action = [0,0,-0.03] 
+        action = [0,0,0.001,0]
+    elif y==7:
+        action = [0,0,-0.001,0]
+    elif y==8:
+        action = [0,0,-0.01,0]
     
     return action     
 
@@ -202,7 +206,7 @@ def train_model():
     target = Variable(target)
 
     errors = torch.abs(pred - target).data.numpy()
-    print(errors[0],pred[0],target[0])
+
         # update priority
     #for i in range(batch_size):
     #    idx = idxs[i]
@@ -237,7 +241,6 @@ def main():
         
         if epi_n > 2000 and epi_n%20==0:
             torch.save(model,"./saved_model2/model_policy_"+str(epi_n)+".pth")
-        
         while not done:
             step += 1
             global_step+=1
@@ -247,15 +250,15 @@ def main():
             state = np.reshape(state, [1, state_size])
             next_state = np.reshape(next_state, [1, state_size])
             #append_sample(state, action, reward, next_state, done)
-            memory.store((state,action,reward,next_state,done))
-
+            if reward>-10:
+                memory.store((state,action,reward,next_state,done))
+                score += reward
             state = next_state
-            score += reward
-            
+
             if global_step >= 150:
                 train_model()
             
-            if step>300:
+            if step>500:
                 done=True
 
             if done:
