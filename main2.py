@@ -133,9 +133,9 @@ def action_select(y):
     elif  y == 5 :
         action = [0,0,-0.001,0]
     elif y==6:
-        action = [0,0,0,0.00005]
+        action = [0,0,0,0.0005]
     elif y==7:
-        action = [0,0,0,-0.00005]
+        action = [0,0,0,-0.0005]
     elif y==8:
         action = [0,0,-0.005,0]
     

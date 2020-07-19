@@ -137,12 +137,10 @@ class UR5_robotiq():
         if temp>5:
             temp=5
         reward=-temp
-        if self.done:
-            self.contact=False
-            if goal:
-                reward=10.0
-            else:
-               reward=-1.0
+        if dis_error<0.001 and ori_error<0.00001:
+            reward=700.0
+            self.done=True
+            print('goal!')
         return self.next_state_dict, reward, self.done, {}
 
 
