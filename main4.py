@@ -8,8 +8,8 @@ import itertools
 import torch
 import time
 
-from dis_env5 import UR5_robotiq
-from net3 import DQN
+from dis_env6 import UR5_robotiq
+from net4 import DQN
 #from prioritized_memory import Memory
 from Per import *
 from matplotlib import pyplot as plt
@@ -74,11 +74,11 @@ parser.add_argument('--evaluate', type=bool, default=False,
 
 args = parser.parse_args()
 
-state_size=17
-action_size=9
+state_size=15
+action_size=10
 #Hyperparameters
 learning_rate = 0.0005 #0.0005
-gamma         = 0.5  #0.98
+gamma         = 0.9  #0.98
 batch_size    = 128
 alpha=0.2
 soft_tau=0.1
@@ -121,23 +121,25 @@ print(pose)
 def action_select(y):
 
     if y == 0 :
-        action = [0.0001,0,0,0]
+        action = [0.00001,0,-0.001,0]
     elif  y == 1 :
-        action = [-0.0001,0,0,0]
+        action = [-0.00001,0,-0.001,0]
     elif  y == 2 :
-        action = [0,0.0001,0,0]
+        action = [0,0.00001,-0.001,0]
     elif  y == 3 :
-        action = [0,-0.0001,0,0]
+        action = [0,-0.00001,-0.001,0]
     elif y==4:
-        action = [0,0,0,-0.000001]
+        action = [0,0,-0.001,-0.000001]
     elif y==5:
-        action = [0,0,0,-0.000001]
+        action = [0,0,-0.001,-0.000001]
     elif y==6:
-        action = [0,0,0.0001,0]
+        action = [-0.001,0,-0.001,0]
     elif y==7:
-        action = [0,0,-0.0001,0]
+        action = [0.001,0,-0.001,0]
     elif y==8:
-        action = [0,0,-0.01,0]
+        action = [0,0.001,-0.001,0]
+    elif y==9:
+        action=[0,-0.001,-0.001,0]
     
     return action     
 

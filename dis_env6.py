@@ -121,33 +121,34 @@ class UR5_robotiq():
         self.move(action)   #move > moveL
         self.next_state_dict = self.get_state()
         
-        rel_pose=np.asarray([self.next_state_dict[0]-self.next_state_dict[10],self.next_state_dict[1]-self.next_state_dict[11],self.next_state_dict[2]-self.next_state_dict[12]])
-        rel_ori=np.asarray([self.next_state_dict[3]-self.next_state_dict[13],self.next_state_dict[4]-self.next_state_dict[14],self.next_state_dict[5]-self.next_state_dict[15],self.next_state_dict[6]-self.next_state_dict[16]])
-        dis_error=np.linalg.norm(rel_pose, axis=-1, ord=2)
+        rel_pose1=np.asarray([self.next_state_dict[0]-self.next_state_dict[8],self.next_state_dict[1]-self.next_state_dict[9]])
+        rel_pose2=np.asarray([self.next_state_dict[0]-self.next_state_dict[8],self.next_state_dict[1]-self.next_state_dict[9],self.next_state_dict[2]-self.next_state_dict[10]])
+        rel_ori=np.asarray([self.next_state_dict[3]-self.next_state_dict[11],self.next_state_dict[4]-self.next_state_dict[12],self.next_state_dict[5]-self.next_state_dict[13],self.next_state_dict[6]-self.next_state_dict[14]])
+        dis_error=np.linalg.norm(rel_pose1, axis=-1, ord=2)
+        dis_error2=np.linalg.norm(rel_pose2, axis=-1, ord=2)
         ori_error=np.linalg.norm(rel_ori, axis=-1, ord=2)
-        force=[]
-        for i in range(3):
-            force.append(self.next_state_dict[i+7])
+        force=self.next_state_dict[7]
         self.done=False
         #self.done = self.contact
         #print((ori_error-1)*100)
-        reward=-dis_error/self.initdis-abs(ori_error-1)*200
-        #print(reward)
-        temp=abs(sum(force))/100
-        #print(self.contact)
+        reward=-dis_error*200-abs(ori_error-1)*200
+        temp=abs(force/200)
+
         if self.next_state_dict[0]-self.next_state_dict[10]>0.01 or self.next_state_dict[1]-self.next_state_dict[11]>0.01:
             self.done=True
             print('out of range')
             reward-=10
-        if dis_error<0.02:
+        
+        if dis_error2<0.005:
             reward+=3.0
             print('going in')
+        
         if self.contact==():
-            reward-=3
+            reward-=1
         else:
-            #print(temp)
             reward-=temp
-        if dis_error<0.001 and ori_error<0.00001:
+        
+        if dis_error2<0.0001 and ori_error<0.00001:
             reward=100.0
             self.done=True
             print('goal!')
@@ -159,7 +160,7 @@ class UR5_robotiq():
         print('reset')
         self.home_pose()
         self.state_dict = self.get_state()
-        temp=np.asarray([self.state_dict[0]-self.state_dict[7],self.state_dict[1]-self.state_dict[8],self.state_dict[2]-self.state_dict[9]])
+        temp=np.asarray([self.state_dict[0]-self.state_dict[8],self.state_dict[1]-self.state_dict[9]])
         self.initdis=np.linalg.norm(temp ,axis=-1, ord=2)
         # # p.removeAllUserDebugItems()
         time.sleep(1)
@@ -351,7 +352,7 @@ class UR5_robotiq():
         #rel_ori = object_ori[2] - ee_ori[2]
         obs_temp = np.array([
             ee_pos[0], ee_pos[1], ee_pos[2],
-            ee_ori[0],ee_ori[1],ee_ori[2],ee_ori[3],ee_force[0],ee_force[1],ee_force[2]
+            ee_ori[0],ee_ori[1],ee_ori[2],ee_ori[3],ee_force[2]
             ])
         #obs1=np.concatenate((obs_temp,ee_force),axis=None)
         ##obs2=np.concatenate((obs,jp),axis=None)
