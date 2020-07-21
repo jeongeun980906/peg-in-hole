@@ -284,8 +284,9 @@ class UR5_robotiq():
             
         stepPos=[]
         stepOri=[]
-        for i in range(3):
-            stepPos.append(currentPose[i] + action[i])
+        for i in range(2):
+            stepPos.append(currentPose[i] + 0.001* action[i])
+        stepPos.apend(currentPose[2])
         stepOri.append(currentPose[3])
         stepOri.append(0.7011236967207826)
         stepOri.append(-currentPose[3])
@@ -318,7 +319,7 @@ class UR5_robotiq():
         joint_states = p.getJointStates(self.robotID, range(p.getNumJoints(self.robotID)))
 
         joint_positions = [state[0] for state in joint_states] #  -> (8,)
-        target=joint_positions[6]+action[3]
+        target=joint_positions[6]+action[2]*0.0001
 
         p.setJointMotorControl2(self.robotID,
                                         6,

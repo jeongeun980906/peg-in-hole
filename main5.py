@@ -9,9 +9,8 @@ import torch
 import time
 
 from dis_env6 import UR5_robotiq
-from net4 import DQN
-#from prioritized_memory import Memory
-from Per import *
+from net5 import Actor, Critic
+from collections import deque
 from matplotlib import pyplot as plt
 
 import collections
@@ -75,7 +74,7 @@ parser.add_argument('--evaluate', type=bool, default=False,
 args = parser.parse_args()
 
 state_size=15
-action_size=9
+action_size=3
 #Hyperparameters
 learning_rate = 0.0005 #0.0005
 gamma         = 0.9  #0.98
@@ -83,14 +82,17 @@ batch_size    = 128
 alpha=0.2
 soft_tau=0.1
 
-model=DQN()
+actor=Actor()
+critic=Critic()
+target_actor=Actor()
+target_critic=Critic()
 
-target_model=DQN()
-target_model.load_state_dict(model.state_dict())
+target_actor.load_state_dict(actor.state_dict())
+target_critic.load_state_dict(critic.state_dict())
 
-
-memory=Memory(10000)
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+memory=deque(maxlen=10000)
+actor_optimizer = optim.Adam(actor.parameters(), lr=learning_rate)
+critic_optimizer = optim.Adam(critic.parameters(), lr=learning_rate)
 # Environment
 env = UR5_robotiq(args)
 # env.getCameraImage()
@@ -118,107 +120,57 @@ print("Robot final pose")
 print(pose)
 '''
    
-def action_select(y):
+#0.01 
+def soft_update(net,target_net):
+    for param, target_param in zip(net.parameters(),arget_net.parameters()):
+        target_param.data.copy_(tau*param.data+(1.0-tau)*target_param.data)
 
-    if y == 0 :
-        action = [0.001,0,0,0]
-    elif  y == 1 :
-        action = [-0.0001,0,0,0]
-    elif  y == 2 :
-        action = [0,0.0001,0,0]
-    elif  y == 3 :
-        action = [0,-0.001,0,0]
-    elif  y == 4 :
-        action = [0.0001,0,0,0]
-    elif  y == 5 :
-        action = [0,-0.0001,0,0]
-    elif y== 6:
-        action = [0,0,0,-0.001]
-    elif y==7:
-        action = [0,0,0,-0.001]
-    elif y==8:
-        action=[0,0,0,0]
-    return action     
+def ou_noise(x,dim):
+    rhp=0.15
+    mu=0
+    dt=1e-1
+    sigma=0.2
+    return x+tho*(mu-x)*dt+sigma*np.sqrt(dt)*np.random.normal(size=dim)
 
-def append_sample(state, action, reward, next_state, done):
-    target = model(Variable(torch.FloatTensor(state))).data
-    old_val = target[0][action]
-    target_val = target_model(Variable(torch.FloatTensor(next_state))).data
-    next_val = model(Variable(torch.FloatTensor(next_state))).data
-    temp=torch.max(next_val, 1)[1].unsqueeze(1)
-    if done:
-        target[0][action] = reward
-    else:
-        target[0][action] = reward + gamma *target_val[0][temp]
+def train():
+    random_mini_batch=random.sample(memory,batch_size)
+    # data 분배
+    mini_batch = np.array(random_mini_batch) 
+    states = np.vstack(mini_batch[:, 0]) 
+    actions = list(mini_batch[:, 1]) 
+    rewards = list(mini_batch[:, 2])
+    next_states = np.vstack(mini_batch[:, 3])
+    masks = list(mini_batch[:, 4]) 
 
-    error = abs(old_val - target[0][action])
-
-    memory.add(error, (state, action, reward, next_state, done))
-
-def update_target():
-    target_model.load_state_dict(model.state_dict())
-
-def train_model():
-    tree_idx,mini_batch= memory.sample(batch_size)
-    #mini_batch, idxs, is_weights = memory.sample(batch_size)
-    mini_batch = np.array(mini_batch).transpose()
-
-    try:
-        states = np.vstack(mini_batch[0])
-    except:
-        pass
-    actions = list(mini_batch[1])
-    rewards = list(mini_batch[2])
-    next_states = np.vstack(mini_batch[3])
-    dones = mini_batch[4]
-
-        # bool to binary
-    dones = dones.astype(int)
-
-        # Q function of current state
+    # tensor.
     states = torch.Tensor(states)
-    states = Variable(states).float()
-    pred = model(states)
-        # one-hot encoding
-    a = torch.LongTensor(actions).view(-1, 1)
-
-    one_hot_action = torch.FloatTensor(batch_size, action_size).zero_()
-    one_hot_action.scatter_(1, a, 1)
-
-    pred = torch.sum(pred.mul(Variable(one_hot_action)), dim=1)
-
-        # Q function of next state
+    actions = torch.Tensor(actions).unsqueeze(1)
+    rewards = torch.Tensor(rewards) 
     next_states = torch.Tensor(next_states)
-    next_states = Variable(next_states).float()
-    next_pred = target_model(next_states).data
+    masks = torch.Tensor(masks)
     
-    next_val = model(Variable(torch.FloatTensor(next_states))).data
-    temp=torch.max(next_val, 1)[1].squeeze(-1).view(-1,1)
-    one_hot_action2 = torch.FloatTensor(batch_size, action_size).zero_()
-    one_hot_action2.scatter_(1, temp, 1)
+    # actor loss
+    actor_loss = -critic(states, actor(states)).mean()
+    
+    #critic loss
+    MSE = torch.nn.MSELoss()
 
-    next_pred = torch.sum(next_pred.mul(Variable(one_hot_action2)), dim=1)
-    rewards = torch.FloatTensor(rewards)
-    dones = torch.FloatTensor(dones)
-        # Q Learning: get maximum Q value at s' from target model
-    target = rewards + (1 - dones) * gamma * next_pred
-    target = Variable(target)
-
-    errors = torch.abs(pred - target).data.numpy()
-
-        # update priority
-    #for i in range(batch_size):
-    #    idx = idxs[i]
-   #     memory.update(idx, errors[i])
-    #print(tree_idx,errors)
-    memory.batch_update(tree_idx,errors)
-
-    optimizer.zero_grad()
-    #loss = (torch.FloatTensor(is_weights) * F.mse_loss(pred, target)).mean()
-    loss = (F.mse_loss(pred, target)).mean()
-    loss.backward()
-    optimizer.step()
-
+    target = rewards + masks * gamma * critic_target(next_states, actor_target(next_states)).squeeze(1)
+    q_value = critic(states, actions).squeeze(1)
+    critic_loss = MSE(q_value, target.detach())
+    
+    # backward.
+    actor_optimizer.zero_grad()
+    actor_loss.backward()
+    actor_optimizer.step()
+    
+    critic_optimizer.zero_grad()
+    critic_loss.backward()
+    critic_optimizer.step()
+    
+    # soft target update
+    soft_update(actor, actor_target)
+    soft_update(critic, critic_target)
 
 def main():
     save_action = []
@@ -230,10 +182,9 @@ def main():
     succ= []
     F = []
     epi=[]
-    ee=1.0
-    ep_min=0.05
     for epi_n in range(5000):
         state = env.reset()
+        pre_noise=np.zeros(action_size)
         done = False
         step = 0
         score = 0
@@ -242,30 +193,25 @@ def main():
         while not done:
             step += 1
             global_step+=1
-            action = model.act(torch.FloatTensor(state),ee)
-            #print(state,action)   #torch.from_numpy(s) > s  
-            next_state, reward, done, _= env.step(action_select(action))
-            state = np.reshape(state, [1, state_size])
-            next_state = np.reshape(next_state, [1, state_size])
-            #append_sample(state, action, reward, next_state, done)
-            if reward>-10:
-                memory.store((state,action,reward,next_state,done))
-                score += reward
-            state = next_state
-
-            if global_step >= 150:
-                train_model()
             
+            action = actor(torch.FloatTensor(state))
+            noise=ou_noise(pre_noise,dim=action_size)
+            action=(action+torch.Tensor(noise)).clamp(-1.0,1.0)
+            
+            next_state, reward, done, _= env.step(list(action))
+            mask =0  if done else 1
+            memory.append((state, action, reward, next_state,  mask))
+            if global_step>1000:
+                train()
+
+            score += reward
+            state = next_state
+            pre_noise=noise
+            ss
             if step>30:
                 done=True
 
             if done:
-                update_target()
-                if ee>ep_min:
-                    ee*=0.999
-                    #print(ee)
-                else:
-                    ee=ep_min
                 if reward>10:
                     succ.append(1)
                 else:
