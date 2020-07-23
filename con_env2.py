@@ -120,38 +120,37 @@ class UR5_robotiq():
     def step(self, action):
 
         self.move(action)
-        self.down()
+        self.down(action)
         self.next_state_dict = self.get_state()
         
-        rel_pose1=np.asarray([self.next_state_dict[0]-self.next_state_dict[8],self.next_state_dict[1]-self.next_state_dict[9]])
-        rel_pose2=np.asarray([self.next_state_dict[0]-self.next_state_dict[8],self.next_state_dict[1]-self.next_state_dict[9],self.next_state_dict[2]-self.next_state_dict[10]])
-        rel_ori=np.asarray([self.next_state_dict[3]-self.next_state_dict[11],self.next_state_dict[4]-self.next_state_dict[12],self.next_state_dict[5]-self.next_state_dict[13],self.next_state_dict[6]-self.next_state_dict[14]])
+        rel_pose1=np.asarray([self.next_state_dict[0]/100,self.next_state_dict[1]/100])
+        rel_pose2=np.asarray([self.next_state_dict[0]/100,self.next_state_dict[1]/100,self.next_state_dict[2]/100])
+        rel_ori=np.asarray([self.next_state_dict[3]/2000,self.next_state_dict[4]/2000,self.next_state_dict[5]/2000,self.next_state_dict[6]/2000])
         dis_error=np.linalg.norm(rel_pose1, axis=-1, ord=2)
         dis_error2=np.linalg.norm(rel_pose2, axis=-1, ord=2)
         ori_error=np.linalg.norm(rel_ori, axis=-1, ord=2)
         force=self.next_state_dict[7]
         self.done=False
         #self.done = self.contact
-        #print((ori_error-1)*100)
-        reward=-dis_error*200-abs(ori_error-1)*200
-        temp=abs(force/300)
-
-        if self.next_state_dict[0]-self.next_state_dict[10]>0.01 or self.next_state_dict[1]-self.next_state_dict[11]>0.01:
+        reward=-dis_error/0.01*0.4-abs(ori_error-1)/0.005*0.4
+        reward-=(self.next_state_dict[2]/100)/0.12*0.2
+        temp=abs(force/800)
+        if dis_error>0.01 or abs(ori_error-1)>0.005:
             self.done=True
             print('out of range')
-            reward-=10
+            reward=-100
         
         if dis_error2<0.005:
             reward+=3.0
             print('going in')
         
         if self.contact==():
-            reward-=1
+            reward-=0.5
         else:
             reward-=temp
         
         if dis_error2<0.0001 and ori_error<0.00001:
-            reward=100.0
+            reward=10.0
             self.done=True
             print('goal!')
         #print(reward)
@@ -162,11 +161,10 @@ class UR5_robotiq():
         print('reset')
         self.home_pose()
         self.state_dict = self.get_state()
-        temp=np.asarray([self.state_dict[0]-self.state_dict[8],self.state_dict[1]-self.state_dict[9]])
-        self.initdis=np.linalg.norm(temp ,axis=-1, ord=2)
+        temp=self.getRobotPose()
         # # p.removeAllUserDebugItems()
-        time.sleep(1)
-        print('init_pose',self.state_dict)
+        time.sleep(0.1)
+        print('init_pose',temp)
         return self.state_dict
 
     def home_pose(self):
@@ -177,7 +175,7 @@ class UR5_robotiq():
             # print(i()
             self.joint = self.joints[name]
             seed=random.random()
-            pose1 = self.init_pose[i]+0.005*(seed-0.5)
+            pose1 = self.init_pose[i]+0.01*(seed-0.5)
             #p.resetJointState(self.robotID, self.joint.id, targetValue=pose1, targetVelocity=0)
             if i < 6:
                 p.resetJointState(self.robotID, self.joint.id, targetValue=pose1, targetVelocity=0)
@@ -242,7 +240,7 @@ class UR5_robotiq():
 
         # print(end-start)
     
-    def down(self,setTime=0.01):
+    def down(self,action,setTime=0.01):
         stepSize = 240*setTime
         currentPose = self.getRobotPose()
             
@@ -250,7 +248,7 @@ class UR5_robotiq():
         stepOri=[]
         stepPos.append(currentPose[0])
         stepPos.append(currentPose[1])
-        stepPos.append(currentPose[2]-0.002)
+        stepPos.append(currentPose[2]-(action[2]+1.05)*0.001)
         stepOri.append(currentPose[3])
         stepOri.append(0.7011236967207826)
         stepOri.append(-currentPose[3])
@@ -286,7 +284,7 @@ class UR5_robotiq():
         stepOri=[]
         for i in range(2):
             stepPos.append(currentPose[i] + 0.001* action[i])
-        stepPos.apend(currentPose[2])
+        stepPos.append(currentPose[2])
         stepOri.append(currentPose[3])
         stepOri.append(0.7011236967207826)
         stepOri.append(-currentPose[3])
@@ -298,7 +296,10 @@ class UR5_robotiq():
                                                     stepOri)
         for i, name in enumerate(self.controlJoints):
             joint = self.joints[name]
-            targetJointPos = jointPos[i]
+            if i==6:
+                targetJointPos = jointPos[i]+action[3]*0.001
+            else:
+                targetJointPos = jointPos[i]
 
             p.setJointMotorControl2(self.robotID,
                                         joint.id,
@@ -311,26 +312,10 @@ class UR5_robotiq():
             # p.addUserDebugLine((0.6475237011909485, 0.6443161964416504, 0.9296525716781616),(0,0,0))
         # for i in range(10):
             
-        for _ in range(500):
+        for _ in range(50):
             p.stepSimulation()
         #time.sleep(0.1)
             # self.getCameraImage()
-        #print(joint_positions)
-        joint_states = p.getJointStates(self.robotID, range(p.getNumJoints(self.robotID)))
-
-        joint_positions = [state[0] for state in joint_states] #  -> (8,)
-        target=joint_positions[6]+action[2]*0.0001
-
-        p.setJointMotorControl2(self.robotID,
-                                        6,
-                                        p.POSITION_CONTROL,
-                                        targetPosition = target,
-                                        # targetVelocity = 5,
-                                        force = joint.maxForce, 
-                                        maxVelocity = joint.maxVelocity)            
-        
-        for _ in range(30):
-            p.stepSimulation()
         #print('step')
         
 
@@ -389,17 +374,14 @@ class UR5_robotiq():
         #     self.object_rel_pos, object_rel_vel,
         # ])self.object_rel_pos[0],self.object_rel_pos[1],self.object_rel_pos[2],, rel_ori
         #rel_ori = object_ori[2] - ee_ori[2]
-        obs_temp = np.array([
-            ee_pos[0], ee_pos[1], ee_pos[2],
-            ee_ori[0],ee_ori[1],ee_ori[2],ee_ori[3],ee_force[2]
+        obs= np.array([
+            100*(ee_pos[0]-object_pos[0]),100*(ee_pos[1]-object_pos[1]), (ee_pos[2]-object_pos[2])*100,
+            2000*(ee_ori[0]-object_ori[0]),2000*(ee_ori[1]-object_ori[1]),2000*(ee_ori[2]-object_ori[2]),2000*(ee_ori[3]-object_ori[3])
+            ,ee_force[2]
             ])
         #obs1=np.concatenate((obs_temp,ee_force),axis=None)
         ##obs2=np.concatenate((obs,jp),axis=None)
-
-        obs_temp2=np.array([object_pos[0],object_pos[1],object_pos[2], 
-            object_ori[0],object_ori[1],object_ori[2],object_ori[3]])
-        obs=np.concatenate((obs_temp,obs_temp2),axis=None)
-        #print(ee_ori)
+        #print(obs)
         return obs
 
     def sigmoid(self, x):

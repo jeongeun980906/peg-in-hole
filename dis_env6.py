@@ -118,7 +118,7 @@ class UR5_robotiq():
         self.last=0
 
     def step(self, action):
-
+        self.up()
         self.move(action)
         self.down()
         self.next_state_dict = self.get_state()
@@ -136,17 +136,17 @@ class UR5_robotiq():
         reward=-dis_error*200-abs(ori_error-1)*200
         temp=abs(force/300)
 
-        if self.next_state_dict[0]-self.next_state_dict[10]>0.01 or self.next_state_dict[1]-self.next_state_dict[11]>0.01:
+        if self.next_state_dict[0]-self.next_state_dict[10]>0.05 or self.next_state_dict[1]-self.next_state_dict[11]>0.005:
             self.done=True
             print('out of range')
-            reward-=10
+            #reward=-1
         
-        if dis_error2<0.005:
+        if dis_error2<0.0085:
             reward+=3.0
             print('going in')
         
         if self.contact==():
-            reward-=1
+            reward-=0.5
         else:
             reward-=temp
         
@@ -251,6 +251,42 @@ class UR5_robotiq():
         stepPos.append(currentPose[0])
         stepPos.append(currentPose[1])
         stepPos.append(currentPose[2]-0.002)
+        stepOri.append(currentPose[3])
+        stepOri.append(0.7011236967207826)
+        stepOri.append(-currentPose[3])
+        stepOri.append(0.7011236967207826)
+
+        jointPos = p.calculateInverseKinematics(self.robotID,
+                                                    self.eefID,
+                                                    stepPos,
+                                                    stepOri)
+        for i, name in enumerate(self.controlJoints):
+            joint = self.joints[name]
+            targetJointPos = jointPos[i]
+
+            p.setJointMotorControl2(self.robotID,
+                                        joint.id,
+                                        p.POSITION_CONTROL,
+                                        targetPosition = targetJointPos,
+                                        # targetVelocity = 5,
+                                        force = joint.maxForce, 
+                                        maxVelocity = joint.maxVelocity)
+
+            # p.addUserDebugLine((0.6475237011909485, 0.6443161964416504, 0.9296525716781616),(0,0,0))
+        # for i in range(10):
+            
+        for _ in range(50):
+            p.stepSimulation()
+    
+    def up(self,setTime=0.01):
+        stepSize = 240*setTime
+        currentPose = self.getRobotPose()
+            
+        stepPos=[]
+        stepOri=[]
+        stepPos.append(currentPose[0])
+        stepPos.append(currentPose[1])
+        stepPos.append(currentPose[2]+0.0003)
         stepOri.append(currentPose[3])
         stepOri.append(0.7011236967207826)
         stepOri.append(-currentPose[3])

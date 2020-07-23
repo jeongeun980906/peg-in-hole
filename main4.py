@@ -75,10 +75,10 @@ parser.add_argument('--evaluate', type=bool, default=False,
 args = parser.parse_args()
 
 state_size=15
-action_size=9
+action_size=7
 #Hyperparameters
 learning_rate = 0.0005 #0.0005
-gamma         = 0.9  #0.98
+gamma         = 0.5  #0.98
 batch_size    = 128
 alpha=0.2
 soft_tau=0.1
@@ -121,22 +121,18 @@ print(pose)
 def action_select(y):
 
     if y == 0 :
-        action = [0.001,0,0,0]
+        action = [0.0001,0,0,0]
     elif  y == 1 :
         action = [-0.0001,0,0,0]
     elif  y == 2 :
         action = [0,0.0001,0,0]
     elif  y == 3 :
-        action = [0,-0.001,0,0]
-    elif  y == 4 :
-        action = [0.0001,0,0,0]
-    elif  y == 5 :
         action = [0,-0.0001,0,0]
-    elif y== 6:
+    elif y== 4:
         action = [0,0,0,-0.001]
-    elif y==7:
+    elif y==5:
         action = [0,0,0,-0.001]
-    elif y==8:
+    elif y==6:
         action=[0,0,0,0]
     return action     
 
@@ -171,7 +167,6 @@ def train_model():
     rewards = list(mini_batch[2])
     next_states = np.vstack(mini_batch[3])
     dones = mini_batch[4]
-
         # bool to binary
     dones = dones.astype(int)
 
