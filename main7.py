@@ -76,7 +76,7 @@ args = parser.parse_args()
 state_size=8
 action_size=3
 #Hyperparameters
-learning_rate = 5e-5 #0.0005
+learning_rate = 2e-4 #0.0005
 gamma         = 0.9  #0.98
 batch_size    = 256
 alpha=0.2
@@ -90,7 +90,7 @@ critic_target=Critic()
 actor_target.load_state_dict(actor.state_dict())
 critic_target.load_state_dict(critic.state_dict())
 
-memory=Memory(10000)
+memory=Memory(5000)
 actor_optimizer = optim.Adam(actor.parameters(), lr=learning_rate)
 critic_optimizer = optim.Adam(critic.parameters(), lr=learning_rate)
 # Environment
@@ -217,12 +217,12 @@ def main():
         while not done:
             step += 1
             global_step+=1
-            
             action = actor(torch.FloatTensor(state))
             #print(action)
             #noise=ou_noise(pre_noise,action_size,sigma)
             if sigma>min_sigma:
                 noise=my_noise(action.detach().numpy(),action_size,sigma)
+            
             else:
                 noise=gaussian_noise(action_size,sigma)
             action=(action+torch.Tensor(noise)).clamp(-1.0,1.0)
@@ -242,7 +242,7 @@ def main():
             if step>50:
                 done=True
             if done:
-                if reward>10:
+                if reward>1:
                     succ.append(1)
                 else:
                     succ.append(0)
@@ -250,16 +250,18 @@ def main():
                     sigma*=0.995
                 else:
                     sigma=min_sigma
-                flag += 1
+                    flag+=1
+                
+                if flag==1:
+                    sigma=0.4
+                    flag=-1000
+                
                 F.append(float(score/(step-1)))
                 epi.append(epi_n)
                 print('n_episode: ',epi_n,'score: ',float(score/(step-1)),'step: ',step,'noise: ',sigma)
                 if epi_n>500:
                     print('error: ',info)
                 break 
-            if flag == 20:
-                flag2 += 1
-            flag = 0 
         
     
     plt.plot(epi,F)   

@@ -87,12 +87,18 @@ class UR5_robotiq():
         
         # define environment
         self.holePos = [0.6, 0.0, 0.87]
+        #self.holePos = [0.6, 0.0, 1.02]
         self.holeOri = p.getQuaternionFromEuler([1.57079632679, 0, 0.261799333]) #.261799333
         
         self.boxId = p.loadURDF(
         "./urdf/peg_hole_gazebo/hole/urdf/hole.SLDPRT.urdf",
         self.holePos, self.holeOri,
         flags = p.URDF_USE_INERTIA_FROM_FILE,useFixedBase=True)
+        #self.boxId = p.loadURDF(
+        #"./urdf/peg_hole_gazebo/hole/urdf/new_hole.urdf",
+        #self.holePos, self.holeOri,
+        #flags = p.URDF_USE_INERTIA_FROM_FILE,useFixedBase=True)
+        
         # p.changeDynamics(self.boxId ,-1,lateralFriction=0.5,spinningFriction=0.1)
       
         # self.holePos = [0.6, -0.1, 0.67]
@@ -124,8 +130,8 @@ class UR5_robotiq():
         self.next_state_dict = self.get_state()
         
         rel_pose1=np.asarray([self.next_state_dict[0]/100,self.next_state_dict[1]/100])
-        rel_pose2=np.asarray([self.next_state_dict[0]/100,self.next_state_dict[1]/100,self.next_state_dict[2]/100])
-        rel_ori=np.asarray([self.next_state_dict[3]/2000,self.next_state_dict[4]/2000,self.next_state_dict[5]/2000,self.next_state_dict[6]/2000])
+        rel_pose2=np.asarray([self.next_state_dict[0]/100,self.next_state_dict[1]/100,self.next_state_dict[2]/5])
+        rel_ori=np.asarray([self.next_state_dict[3]/100,self.next_state_dict[4]/100,self.next_state_dict[5]/100,self.next_state_dict[6]/100])
         dis_error=np.linalg.norm(rel_pose1, axis=-1, ord=2)
         dis_error2=np.linalg.norm(rel_pose2, axis=-1, ord=2)
         ori_error=np.linalg.norm(rel_ori, axis=-1, ord=2)
@@ -133,30 +139,27 @@ class UR5_robotiq():
         self.done=False
         #self.done = self.contact
         info=(dis_error,ori_error)
-        reward=-dis_error/0.01*0.4-abs(ori_error-1)/0.005*0.4
-        reward-=(self.next_state_dict[2]/100)/0.12*0.2
-        temp=abs(force/800)
-        if dis_error>0.01 or abs(ori_error-1)>0.005:
+        reward=-dis_error/0.01*0.7-ori_error/0.001*0.3
+        #reward-=(self.next_state_dict[2]/100)/0.12*0.2
+        #temp=abs(force/800)
+        if dis_error>0.01 or ori_error>0.01:
             self.done=True
             print('out of range')
-            reward=-100
+            #print(dis_error,ori_error)
+            reward=-10
         
-        if dis_error<0.0007 and abs(ori_error-1)<0.0001:
-            reward+=3.0
-            self.down(0.05)
+        if dis_error<0.0003 and ori_error<0.00005:
+            reward+=10.0
+            self.down(0.01)
             print('going in')
+            self.done=True
         
         if self.contact==():
-            reward-=0.5
+            #reward-=0.5
             self.down(0.005)
-        else:
-            reward-=temp
-        
-        if dis_error2<0.0001 and ori_error<0.00001:
-            reward=10.0
-            self.done=True
-            print('goal!')
-        #print(reward)
+        #else:
+            #reward-=temp
+
         return self.next_state_dict, reward, self.done, info
 
     def reset(self):
@@ -285,7 +288,7 @@ class UR5_robotiq():
         stepPos=[]
         stepOri=[]
         for i in range(2):
-            stepPos.append(currentPose[i] + 0.001* action[i])
+            stepPos.append(currentPose[i] + 0.0003* action[i])
         stepPos.append(currentPose[2])
         stepOri.append(currentPose[3])
         stepOri.append(0.7011236967207826)
@@ -299,7 +302,7 @@ class UR5_robotiq():
         for i, name in enumerate(self.controlJoints):
             joint = self.joints[name]
             if i==6:
-                targetJointPos = jointPos[i]+action[2]*0.001
+                targetJointPos = jointPos[i]+action[2]*0.0005
             else:
                 targetJointPos = jointPos[i]
 
@@ -314,7 +317,7 @@ class UR5_robotiq():
             # p.addUserDebugLine((0.6475237011909485, 0.6443161964416504, 0.9296525716781616),(0,0,0))
         # for i in range(10):
             
-        for _ in range(50):
+        for _ in range(25):
             p.stepSimulation()
         #time.sleep(0.1)
             # self.getCameraImage()
@@ -368,7 +371,7 @@ class UR5_robotiq():
         self.contact = p.getContactPoints(bodyA=self.robotID,bodyB=self.boxId,linkIndexA=7)
         #print(self.contact)
         #self.contact2 = p.getContactPoints(bodyA=self.robotID,bodyB=self.tableID)
-
+        #print(ee_ori,object_ori)
         # Final states
         # obs = np.concatenate([
         #     ee_pos, ee_linear_vel, #gripper_state, gripper_vel,
@@ -377,13 +380,13 @@ class UR5_robotiq():
         # ])self.object_rel_pos[0],self.object_rel_pos[1],self.object_rel_pos[2],, rel_ori
         #rel_ori = object_ori[2] - ee_ori[2]
         obs= np.array([
-            100*(ee_pos[0]-object_pos[0]),100*(ee_pos[1]-object_pos[1]), (ee_pos[2]-object_pos[2])*100,
-            2000*(ee_ori[0]-object_ori[0]),2000*(ee_ori[1]-object_ori[1]),2000*(ee_ori[2]-object_ori[2]),2000*(ee_ori[3]-object_ori[3])
+            100*(ee_pos[0]-object_pos[0]),100*(ee_pos[1]-object_pos[1]), (ee_pos[2]-object_pos[2])/0.2,
+            100*(ee_ori[0]+object_ori[1]),100*(ee_ori[1]-object_ori[0]),100*(ee_ori[2]-object_ori[2]),100*(ee_ori[3]-object_ori[3])
             ,ee_force[2]
             ])
         #obs1=np.concatenate((obs_temp,ee_force),axis=None)
         ##obs2=np.concatenate((obs,jp),axis=None)
-        #print(obs)
+       # print(obs)
         return obs
 
     def sigmoid(self, x):
