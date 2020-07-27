@@ -126,7 +126,7 @@ class UR5_robotiq():
     def step(self, action):
 
         self.move(action)
-        #self.down(action)
+        self.down(action[2])
         self.next_state_dict = self.get_state()
         
         rel_pose1=np.asarray([self.next_state_dict[0]/100,self.next_state_dict[1]/100])
@@ -135,23 +135,20 @@ class UR5_robotiq():
         dis_error=np.linalg.norm(rel_pose1, axis=-1, ord=2)
         dis_error2=np.linalg.norm(rel_pose2, axis=-1, ord=2)
         ori_error=np.linalg.norm(rel_ori, axis=-1, ord=2)
-        force=self.next_state_dict[7]
+
         self.done=False
         #self.done = self.contact
-        info=(dis_error,ori_error)
-        reward=-dis_error/0.01*0.7-ori_error/0.001*0.3
-        #reward-=(self.next_state_dict[2]/100)/0.12*0.2
-        #temp=abs(force/800)
+        info=(dis_error2,ori_error)
+        reward=0
         if dis_error>0.01 or ori_error>0.01:
             self.done=True
             print('out of range')
             #print(dis_error,ori_error)
-            reward=-10
+            reward=-1.0
         
-        if dis_error<0.0003 and ori_error<0.00005:
-            reward+=10.0
-            self.down(0.01)
-            print('going in')
+        if dis_error2<0.0003 and ori_error<0.00005:
+            reward+=1.0
+            print('goal')
             self.done=True
         
         if self.contact==():
@@ -382,7 +379,7 @@ class UR5_robotiq():
         obs= np.array([
             100*(ee_pos[0]-object_pos[0]),100*(ee_pos[1]-object_pos[1]), (ee_pos[2]-object_pos[2])/0.2,
             100*(ee_ori[0]+object_ori[1]),100*(ee_ori[1]-object_ori[0]),100*(ee_ori[2]-object_ori[2]),100*(ee_ori[3]-object_ori[3])
-            ,ee_force[0]/50,ee_force[1]/50,ee_force[2]/50,ee_linear_vel[0],ee_linear_vel[1],ee_linear_vel[2]
+            ,ee_force[2]
             ])
         #obs1=np.concatenate((obs_temp,ee_force),axis=None)
         ##obs2=np.concatenate((obs,jp),axis=None)

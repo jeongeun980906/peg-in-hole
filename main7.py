@@ -73,7 +73,7 @@ parser.add_argument('--evaluate', type=bool, default=False,
 
 args = parser.parse_args()
 
-state_size=8
+state_size=13
 action_size=3
 #Hyperparameters
 learning_rate = 2e-4 #0.0005
@@ -213,7 +213,7 @@ def main():
         step = 0
         score = 0
         if epi_n > 1000 and epi_n%20==0:
-            torch.save(actor,"./saved_model/model"+str(epi_n)+".pth")
+            torch.save(actor,"./saved_model2/model"+str(epi_n)+".pth")
         while not done:
             step += 1
             global_step+=1
@@ -256,9 +256,9 @@ def main():
                     sigma=0.4
                     flag=-1000
                 
-                F.append(float(score/(step-1)))
+                F.append(score)
                 epi.append(epi_n)
-                print('n_episode: ',epi_n,'score: ',float(score/(step-1)),'step: ',step,'noise: ',sigma)
+                print('n_episode: ',epi_n,'score: ',score,'step: ',step,'noise: ',sigma)
                 if epi_n>500:
                     print('error: ',info)
                 break 

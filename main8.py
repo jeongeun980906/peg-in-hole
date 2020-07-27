@@ -8,11 +8,11 @@ import itertools
 import torch
 import time
 
-from conv_env4 import UR5_robotiq
-
+from con_env3 import UR5_robotiq
+from net8 import Actor, Critic
 from collections import deque
 from matplotlib import pyplot as plt
-
+from Per import *
 import collections
 import random
 import torch.nn as nn
@@ -73,13 +73,26 @@ parser.add_argument('--evaluate', type=bool, default=False,
 
 args = parser.parse_args()
 
-state_size=8
-action_size=3
+state_size=13
+action_size=4
+#Hyperparameters
+learning_rate = 2e-4 #0.0005
+gamma         = 0.99999  #0.98
+batch_size    = 256
+alpha=0.2
+tau=0.1
 
-PATH="./saved_model2/model1800.pth"
-actor= torch.load(PATH)
-actor.eval()
+actor=Actor()
+critic=Critic()
+actor_target=Actor()
+critic_target=Critic()
 
+actor_target.load_state_dict(actor.state_dict())
+critic_target.load_state_dict(critic.state_dict())
+
+memory=Memory(5000)
+actor_optimizer = optim.Adam(actor.parameters(), lr=learning_rate)
+critic_optimizer = optim.Adam(critic.parameters(), lr=learning_rate)
 # Environment
 env = UR5_robotiq(args)
 # env.getCameraImage()
@@ -106,6 +119,80 @@ pose = env.getRobotPose()
 print("Robot final pose")
 print(pose)
 '''
+device = torch.device('cpu')
+#0.01 
+def append_sample(state, action, reward, next_state, mask):
+    q_value = critic(states, actions).squeeze(1)
+    
+    target = reward + mask * gamma * critic_target(next_state, actor_target(next_state)).squeeze(1)
+
+    error = abs(old_val - target[0][action])
+
+    memory.add(error, (state, action, reward, next_state, mask))
+
+def soft_update(net,target_net):
+    for param, target_param in zip(net.parameters(),target_net.parameters()):
+        target_param.data.copy_(tau*param.data+(1.0-tau)*target_param.data)
+
+def ou_noise(x,dim,sigma):
+    rho=0.07
+    mu=0
+    dt=1e-2
+    return x-rho*x*dt+sigma*np.sqrt(dt)*np.random.normal(size=dim)
+
+def gaussian_noise(dim,sigma):
+    return sigma*np.random.normal(size=dim)
+
+def my_noise(x,dim,sigma):
+    return x*sigma*np.random.normal(size=dim)-x*sigma*3
+
+def train():
+    #random_mini_batch=random.sample(memory,batch_size)
+    tree_idx,mini_batch= memory.sample(batch_size)
+    mini_batch = np.array(mini_batch).transpose()
+    # data 분배
+    #mini_batch = np.array(random_mini_batch) 
+    #states = np.vstack(mini_batch[:, 0]) 
+    #actions = list(mini_batch[:, 1])
+    #rewards = list(mini_batch[:, 2])
+    #next_states = np.vstack(mini_batch[:, 3])
+    #masks = list(mini_batch[:, 4]) 
+    states = np.vstack(mini_batch [0]) 
+    actions = list(mini_batch[1])
+    rewards = list(mini_batch[2])
+    next_states = np.vstack(mini_batch[3])
+    masks = list(mini_batch[4]) 
+
+    # tensor.
+    states = torch.Tensor(states)
+    actions = torch.Tensor(actions)
+    rewards = torch.Tensor(rewards) 
+    next_states = torch.Tensor(next_states)
+    masks = torch.Tensor(masks)
+    # actor loss
+    actor_loss = -critic(states, actor(states)).mean()
+    #critic loss
+    MSE = torch.nn.MSELoss()
+
+    target = rewards + masks * gamma * critic_target(next_states, actor_target(next_states)).squeeze(1)
+    q_value = critic(states, actions).squeeze(1)
+    critic_loss = MSE(q_value, target.detach())
+    
+    errors=torch.abs(q_value-target.detach()).data.numpy()
+    memory.batch_update(tree_idx,errors)
+    
+    # backward.
+    actor_optimizer.zero_grad()
+    actor_loss.backward()
+    actor_optimizer.step()
+    
+    critic_optimizer.zero_grad()
+    critic_loss.backward()
+    critic_optimizer.step()
+    
+    # soft target update
+    soft_update(actor, actor_target)
+    soft_update(critic, critic_target)
 
 def main():
     save_action = []
@@ -117,44 +204,68 @@ def main():
     succ= []
     F = []
     epi=[]
-    sigma=0.2
-    min_sigma=0.01
-    for epi_n in range(10):
+    sigma=0.8
+    min_sigma=0.05
+    for global_step in range(200000):
         state = env.reset()
         #pre_noise=np.zeros(action_size)
         done = False
         step = 0
         score = 0
+        if global_step > 100000 and global_step%1000==0:
+            torch.save(actor,"./saved_model2/model"+str(epi_n)+".pth")
         while not done:
             step += 1
             global_step+=1
-            
             action = actor(torch.FloatTensor(state))
+            #print(action)
+            #noise=ou_noise(pre_noise,action_size,sigma)
+            if sigma>min_sigma:
+                noise=my_noise(action.detach().numpy(),action_size,sigma)
+            
+            else:
+                noise=gaussian_noise(action_size,sigma)
+            action=(action+torch.Tensor(noise)).clamp(-1.0,1.0)
+            #print(noise,action)
             next_state, reward, done, info= env.step(list(action))
-            print('error',info)
+            mask =0  if done else 1
+            a=action.detach().numpy()
+            
+            memory.store((state,a,reward,next_state,mask))
+            #memory.append((state, a, reward, next_state,  mask))
+            if global_step>300:
+                train()
             score += reward
             state = next_state
-            if step>100:
-                done=True
-            if info[0]<0.0003 and info[1]<0.0005:
-                env.down(0.05)
-                time.sleep(1000)
-                done=True
+            pre_noise=noise
             if done:
-                if reward>10:
+                if reward>1:
                     succ.append(1)
                 else:
                     succ.append(0)
-                flag += 1
-                F.append(float(score/(step-1)))
+            
+            if global_step%1000==0:
+                if sigma>min_sigma:
+                    sigma*=0.995
+                else:
+                    sigma=min_sigma
+                    flag+=1
+                
+                if flag==1:
+                    sigma=0.4
+                    flag=-1000
+                
+                F.append(score)
                 epi.append(epi_n)
-                print('n_episode: ',epi_n,'score: ',float(score/(step-1)),'step: ',step,'noise: ',sigma)
-                break
+                print('n_episode: ',epi_n,'score: ',score,'step: ',step,'noise: ',sigma)
+                if epi_n>500:
+                    print('error: ',info)
+                break 
         
     
     plt.plot(epi,F)   
     f = open("saved_model/fig.txt", 'w')
-    f.write(str(succ))
+    f.write(str(score))
     f.close()
     plt.show()
                    

@@ -382,7 +382,7 @@ class UR5_robotiq():
         obs= np.array([
             100*(ee_pos[0]-object_pos[0]),100*(ee_pos[1]-object_pos[1]), (ee_pos[2]-object_pos[2])/0.2,
             100*(ee_ori[0]+object_ori[1]),100*(ee_ori[1]-object_ori[0]),100*(ee_ori[2]-object_ori[2]),100*(ee_ori[3]-object_ori[3])
-            ,ee_force[0]/50,ee_force[1]/50,ee_force[2]/50,ee_linear_vel[0],ee_linear_vel[1],ee_linear_vel[2]
+            ,ee_force[2]
             ])
         #obs1=np.concatenate((obs_temp,ee_force),axis=None)
         ##obs2=np.concatenate((obs,jp),axis=None)
