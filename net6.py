@@ -9,7 +9,7 @@ import numpy as np
 class Actor_net(nn.Module):
     def __init__(self):
         super(Actor_net, self).__init__()
-        self.fc1 = nn.Linear(8, 128)
+        self.fc1 = nn.Linear(13, 128)
         self.fc2 = nn.Linear(128, 128)
         self.fc3 = nn.Linear(128, 128)
         
@@ -34,7 +34,7 @@ class Actor_net(nn.Module):
 class Critic_net(nn.Module):
     def __init__(self):
         super(Critic_net, self).__init__()
-        self.fc1 = nn.Linear(8, 128)
+        self.fc1 = nn.Linear(13, 128)
         self.fc2 = nn.Linear(128, 128)
         self.fc3 = nn.Linear(128, 128)
         

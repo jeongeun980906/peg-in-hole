@@ -146,10 +146,12 @@ class UR5_robotiq():
             self.done=True
             print('out of range')
             #print(dis_error,ori_error)
-            reward=-10
+            #reward=-30
+            reward=-1
         
         if dis_error<0.0003 and ori_error<0.00005:
-            reward+=10.0
+            #reward+=10.0
+            reward=0.0
             self.down(0.01)
             print('going in')
             self.done=True

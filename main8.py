@@ -8,17 +8,19 @@ import itertools
 import torch
 import time
 
-from con_env3 import UR5_robotiq
+from con_env5 import UR5_robotiq
 from net8 import Actor, Critic
 from collections import deque
 from matplotlib import pyplot as plt
 from Per import *
+from her import HER
 import collections
 import random
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
+from copy import deepcopy as dc
 
 parser = argparse.ArgumentParser(description='PyTorch Soft Actor-Critic Args')
 parser.add_argument('--env-name', default="Allegro",
@@ -74,10 +76,10 @@ parser.add_argument('--evaluate', type=bool, default=False,
 args = parser.parse_args()
 
 state_size=13
-action_size=4
+action_size=3
 #Hyperparameters
 learning_rate = 2e-4 #0.0005
-gamma         = 0.99999  #0.98
+gamma         = 0.999  #0.98
 batch_size    = 256
 alpha=0.2
 tau=0.1
@@ -96,6 +98,7 @@ critic_optimizer = optim.Adam(critic.parameters(), lr=learning_rate)
 # Environment
 env = UR5_robotiq(args)
 # env.getCameraImage()
+her=HER()
 
 pose = env.getRobotPose()
 print("Robot initial pose")
@@ -195,7 +198,6 @@ def train():
     soft_update(critic, critic_target)
 
 def main():
-    save_action = []
     flag = 0
     flag2 = 0
     print_interval = 20 
@@ -206,25 +208,22 @@ def main():
     epi=[]
     sigma=0.8
     min_sigma=0.05
-    for global_step in range(200000):
+    for epi_n in range(2000):
         state = env.reset()
         #pre_noise=np.zeros(action_size)
         done = False
         step = 0
         score = 0
-        if global_step > 100000 and global_step%1000==0:
-            torch.save(actor,"./saved_model2/model"+str(epi_n)+".pth")
+        if epi_n > 1000 and epi_n%20==0:
+            torch.save(actor,"./saved_model3/model"+str(epi_n)+".pth")
         while not done:
             step += 1
             global_step+=1
             action = actor(torch.FloatTensor(state))
             #print(action)
             #noise=ou_noise(pre_noise,action_size,sigma)
-            if sigma>min_sigma:
-                noise=my_noise(action.detach().numpy(),action_size,sigma)
-            
-            else:
-                noise=gaussian_noise(action_size,sigma)
+            noise=gaussian_noise(action_size,sigma)
+
             action=(action+torch.Tensor(noise)).clamp(-1.0,1.0)
             #print(noise,action)
             next_state, reward, done, info= env.step(list(action))
@@ -232,19 +231,24 @@ def main():
             a=action.detach().numpy()
             
             memory.store((state,a,reward,next_state,mask))
+            her.keep([dc(state),dc(a),dc(reward),dc(next_state),dc(mask)])
+            
             #memory.append((state, a, reward, next_state,  mask))
             if global_step>300:
                 train()
             score += reward
             state = next_state
-            pre_noise=noise
+
+            if step>300:
+                done=True
             if done:
-                if reward>1:
+                her_list=her.backward()
+                for item in her_list:
+                    memory.store((item))
+                if reward==1:
                     succ.append(1)
                 else:
                     succ.append(0)
-            
-            if global_step%1000==0:
                 if sigma>min_sigma:
                     sigma*=0.995
                 else:
@@ -260,13 +264,16 @@ def main():
                 print('n_episode: ',epi_n,'score: ',score,'step: ',step,'noise: ',sigma)
                 if epi_n>500:
                     print('error: ',info)
-                break 
+                break
+
+                
+                
         
     
     plt.plot(epi,F)   
-    f = open("saved_model/fig.txt", 'w')
-    f.write(str(score))
-    f.close()
+    #f = open("saved_model2/fig.txt", 'w')
+    #f.write(str(score))
+    #f.close()
     plt.show()
                    
     env.close()

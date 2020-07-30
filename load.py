@@ -8,7 +8,7 @@ import itertools
 import torch
 import time
 
-from conv_env4 import UR5_robotiq
+from con_env6 import UR5_robotiq
 
 from collections import deque
 from matplotlib import pyplot as plt
@@ -76,7 +76,7 @@ args = parser.parse_args()
 state_size=8
 action_size=3
 
-PATH="./saved_model2/model1800.pth"
+PATH="./saved_model3/model1500.pth"
 actor= torch.load(PATH)
 actor.eval()
 
@@ -108,18 +108,9 @@ print(pose)
 '''
 
 def main():
-    save_action = []
-    flag = 0
-    flag2 = 0
-    print_interval = 20 
     score = 0.0  
     global_step=0
-    succ= []
-    F = []
-    epi=[]
-    sigma=0.2
-    min_sigma=0.01
-    for epi_n in range(10):
+    for epi_n in range(1000):
         state = env.reset()
         #pre_noise=np.zeros(action_size)
         done = False
@@ -134,31 +125,12 @@ def main():
             print('error',info)
             score += reward
             state = next_state
-            if step>100:
-                done=True
-            if info[0]<0.0003 and info[1]<0.0005:
-                env.down(0.05)
-                time.sleep(1000)
-                done=True
             if done:
-                if reward>10:
-                    succ.append(1)
-                else:
-                    succ.append(0)
-                flag += 1
-                F.append(float(score/(step-1)))
-                epi.append(epi_n)
-                print('n_episode: ',epi_n,'score: ',float(score/(step-1)),'step: ',step,'noise: ',sigma)
+                env.down(-0.01)
+                time.sleep(5)
+                env.down(0.01)
                 break
         
-    
-    plt.plot(epi,F)   
-    f = open("saved_model/fig.txt", 'w')
-    f.write(str(succ))
-    f.close()
-    plt.show()
-                   
-    env.close()
 
 if __name__ == '__main__':
     main()

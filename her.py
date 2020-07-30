@@ -14,14 +14,14 @@ class HER:
     def backward(self):
         idx=0
         num=len(self.buffer)
-        goal=self.buffer[-1][-2][:6]
+        goal=self.buffer[-1][-2][:7]
         for i in range(num):
-            temp=copy.deepcopy(self.buffer[-1-i][-2][:6])
+            temp=copy.deepcopy(self.buffer[-1-i][-2][:7])
             if (list(temp)==list(goal)):
-                self.buffer[-1-i][2]=0.0
-                self.buffer[-1-i][4]=True
+                self.buffer[-1-i][2]=1.0 #reward
+                self.buffer[-1-i][4]=0 #mask
                 idx+=1
-            self.buffer[-1-i][-2][23:]=copy.deepcopy(goal)
-            self.buffer[-1-i][0][23:]=copy.deepcopy(goal)
+            self.buffer[-1-i][-2][13:]=copy.deepcopy(goal)
+            self.buffer[-1-i][0][13:]=copy.deepcopy(goal)
             
         return self.buffer

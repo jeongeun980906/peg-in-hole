@@ -77,7 +77,7 @@ state_size=13
 action_size=3
 #Hyperparameters
 learning_rate = 2e-4 #0.0005
-gamma         = 0.9  #0.98
+gamma         = 0.5  #0.98
 batch_size    = 256
 alpha=0.2
 tau=0.1
@@ -195,7 +195,6 @@ def train():
     soft_update(critic, critic_target)
 
 def main():
-    save_action = []
     flag = 0
     flag2 = 0
     print_interval = 20 

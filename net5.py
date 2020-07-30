@@ -9,7 +9,7 @@ import numpy as np
 class Actor(nn.Module):
     def __init__(self):
         super(Actor, self).__init__()
-        self.fc1 = nn.Linear(8, 128)
+        self.fc1 = nn.Linear(13, 128)
         self.fc2 = nn.Linear(128, 128)
         self.fc3 = nn.Linear(128, 64)
         self.fc4 = nn.Linear(64, 4)
@@ -39,7 +39,7 @@ class Actor(nn.Module):
 class Critic(nn.Module):
     def __init__(self):
         super(Critic, self).__init__()
-        self.fc1 = nn.Linear(8, 128)
+        self.fc1 = nn.Linear(13, 128)
         self.fc2_1 = nn.Linear(128, 64)
         self.L1=nn.LayerNorm(128)
 

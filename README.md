@@ -6,4 +6,7 @@
 # main5 - DDPG-with PER with 4 action dim
 # main6 - PPO
 # main7 - DDPG-with PER with 3 action dim 
-# main8 - DDPG with sparse reward + 4 action + infinite horizon
+# main8 - DDPG with sparse reward + HER
+# main10 - RDPG -> 4 action dim env8 
+# main11 - joint control with ddpg
+# main12 - DDPG-with PER with 4 action dim env8

@@ -126,12 +126,12 @@ class UR5_robotiq():
     def step(self, action):
 
         self.move(action)
-        self.down(action[2])
         self.next_state_dict = self.get_state()
         
-        rel_pose1=np.asarray([self.next_state_dict[0]/100,self.next_state_dict[1]/100])
-        rel_pose2=np.asarray([self.next_state_dict[0]/100,self.next_state_dict[1]/100,self.next_state_dict[2]/5])
-        rel_ori=np.asarray([self.next_state_dict[3]/100,self.next_state_dict[4]/100,self.next_state_dict[5]/100,self.next_state_dict[6]/100])
+        rel_pose1=np.asarray([self.next_state_dict[0]-self.next_state_dict[13],self.next_state_dict[1]-self.next_state_dict[14]])
+        rel_pose2=np.asarray([self.next_state_dict[0]-self.next_state_dict[13],self.next_state_dict[1]-self.next_state_dict[14],self.next_state_dict[2]-self.next_state_dict[15]])
+        rel_ori=np.asarray([self.next_state_dict[3]-self.next_state_dict[16],self.next_state_dict[4]-self.next_state_dict[17]
+                            ,self.next_state_dict[5]-self.next_state_dict[18],self.next_state_dict[6]-self.next_state_dict[19]])
         dis_error=np.linalg.norm(rel_pose1, axis=-1, ord=2)
         dis_error2=np.linalg.norm(rel_pose2, axis=-1, ord=2)
         ori_error=np.linalg.norm(rel_ori, axis=-1, ord=2)
@@ -147,7 +147,7 @@ class UR5_robotiq():
             reward=-1.0
         
         if dis_error2<0.0003 and ori_error<0.00005:
-            reward+=1.0
+            reward=1.0
             print('goal')
             self.done=True
         
@@ -377,9 +377,10 @@ class UR5_robotiq():
         # ])self.object_rel_pos[0],self.object_rel_pos[1],self.object_rel_pos[2],, rel_ori
         #rel_ori = object_ori[2] - ee_ori[2]
         obs= np.array([
-            100*(ee_pos[0]-object_pos[0]),100*(ee_pos[1]-object_pos[1]), (ee_pos[2]-object_pos[2])/0.2,
-            100*(ee_ori[0]+object_ori[1]),100*(ee_ori[1]-object_ori[0]),100*(ee_ori[2]-object_ori[2]),100*(ee_ori[3]-object_ori[3])
-            ,ee_force[2]
+            ee_pos[0],ee_pos[1],object_pos[2],
+            ee_ori[0],ee_ori[1],ee_ori[2],ee_ori[3]
+            ,ee_force[0],ee_force[1],ee_force[2],ee_linear_vel[0],ee_linear_vel[1],ee_linear_vel[2]
+            ,object_pos[0],object_pos[1],object_pos[2],-object_ori[1],object_ori[0],object_ori[2],object_ori[3]
             ])
         #obs1=np.concatenate((obs_temp,ee_force),axis=None)
         ##obs2=np.concatenate((obs,jp),axis=None)

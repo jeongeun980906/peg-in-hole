@@ -9,16 +9,16 @@ import numpy as np
 class Actor(nn.Module):
     def __init__(self):
         super(Actor, self).__init__()
-        self.fc1 = nn.Linear(13, 128)
+        self.fc1 = nn.Linear(20, 128)
         #self.fc1=nn.LSTM(8,128)
-        self.fc2 = nn.Linear(128, 128)
-        self.fc3 = nn.Linear(128, 128)
-        self.fc4 = nn.Linear(128, 4)
+        self.fc2 = nn.Linear(128, 512)
+        self.fc3 = nn.Linear(512, 128)
+        self.fc4 = nn.Linear(128, 3)
         
         self.L1=nn.LayerNorm(128)
-        self.L2=nn.LayerNorm(128)
+        self.L2=nn.LayerNorm(512)
         self.L3=nn.LayerNorm(128)
-        self.L4=nn.LayerNorm(4)
+        self.L4=nn.LayerNorm(3)
 
         nn.init.kaiming_normal_(self.fc1.weight.data)
         nn.init.kaiming_normal_(self.fc2.weight.data)
@@ -40,19 +40,19 @@ class Actor(nn.Module):
 class Critic(nn.Module):
     def __init__(self):
         super(Critic, self).__init__()
-        self.fc1 = nn.Linear(13, 128)
+        self.fc1 = nn.Linear(20, 128)
         #self.fc1=nn.LSTM(8,128,1)
-        self.fc2_1 = nn.Linear(128, 64)
+        self.fc2_1 = nn.Linear(128, 256)
         self.L1=nn.LayerNorm(128)
 
         nn.init.kaiming_normal_(self.fc1.weight.data)
         nn.init.kaiming_normal_(self.fc2_1.weight.data)
         
         #self.fc1_1=nn.LSTM(3,128,1)
-        self.fc1_1 = nn.Linear(4, 128)
+        self.fc1_1 = nn.Linear(3, 128)
         self.L2=nn.LayerNorm(128)
-        self.fc2_2 = nn.Linear(128,64)
-        self.fc3 = nn.Linear(128, 128)
+        self.fc2_2 = nn.Linear(128,256)
+        self.fc3 = nn.Linear(512, 128)
         self.fc4 = nn.Linear(128, 1)
         
         nn.init.kaiming_normal_(self.fc1_1.weight.data)
