@@ -79,7 +79,7 @@ action_size=4
 #Hyperparameters
 learning_rate = 2e-4 #0.0005
 gamma         = 0.9 #0.98
-batch_size    = 16
+batch_size    = 64
 alpha=0.2
 tau=0.1
 
@@ -244,7 +244,7 @@ def main():
             
             memory.append(state,a,reward,done)
             #memory.append((state, a, reward, next_state,  mask))
-            if epi_n>20:
+            if epi_n>65:
                 actor.reset(done=done)
                 train()
             score += reward

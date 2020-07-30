@@ -46,7 +46,7 @@ class UR5_robotiq():
         self.observation_space = 39     # Input size
         self.action_space = Box(-ACTION_RANGE, ACTION_RANGE, (4,))
 
-        self.init_pose = [-0.18309111934162953, -1.14033624468874, 1.7881880745399235, -2.2527808767352, -1.570780829840282, -0.4448710813788053]
+        self.init_pose = [-0.18309111934162953, -1.14033624468874, 1.7881880745399235, -2.2527808767352, -1.570780829840282, -0.4448227675725946]
         self.goal_pose=[-0.1830197380957823, -1.0908494021052788, 1.7952853703555125, -2.275321638666715, -1.5707920663516683, -0.4448227675725946]
 
         self.home_pose()
@@ -129,24 +129,24 @@ class UR5_robotiq():
         self.move(action)
         #self.down(action)
         self.next_state_dict = self.get_state()
+        rel_pose1=np.asarray([self.next_state_dict[0]/100,self.next_state_dict[1]/100])
         rel_pose2=np.asarray([self.next_state_dict[0]/100,self.next_state_dict[1]/100,self.next_state_dict[2]/5])
         rel_ori=np.asarray([self.next_state_dict[3]/100,self.next_state_dict[4]/100,self.next_state_dict[5]/100,self.next_state_dict[6]/100])
         dis_error=np.linalg.norm(rel_pose2, axis=-1, ord=2)
+        dis_error2=np.linalg.norm(rel_pose1, axis=-1, ord=2)
         ori_error=np.linalg.norm(rel_ori, axis=-1, ord=2)
         #force=self.next_state_dict[7]
         self.done=False
         #self.done = self.contact
         info=(dis_error,ori_error)
-        reward=-dis_error/0.1*0.7-ori_error/0.02*0.3
-        #reward-=(self.next_state_dict[2]/100)/0.12*0.2
-        #temp=abs(force/800)
-        if dis_error>0.1 or ori_error>0.02:
+        reward=-dis_error/0.05*0.3-ori_error/0.02*0.3-dis_error2/0.01*0.4
+        if dis_error>0.05 or ori_error>0.02:
             self.done=True
             print('out of range')
             #print(dis_error,ori_error)
             reward=-1
         
-        if dis_error<0.06 and ori_error<0.0005:
+        if dis_error<0.005 and ori_error<0.0005:
             reward=1
             #self.down(0.05)
             print('going in')
@@ -157,7 +157,7 @@ class UR5_robotiq():
             self.down(0.005)
         #else:
             #reward-=temp
-
+        #print(reward)
         return self.next_state_dict, reward, self.done, info
 
     def reset(self):
@@ -286,8 +286,8 @@ class UR5_robotiq():
         stepPos=[]
         stepOri=[]
         for i in range(2):
-            stepPos.append(currentPose[i] + 0.0001* action[i])
-        stepPos.append(currentPose[2] - 0.001* (action[2]+1))
+            stepPos.append(currentPose[i] + 0.0005* action[i])
+        stepPos.append(currentPose[2] - 0.002* (action[2]+1))
         stepOri.append(currentPose[3])
         stepOri.append(0.7011236967207826)
         stepOri.append(-currentPose[3])
@@ -300,7 +300,7 @@ class UR5_robotiq():
         for i, name in enumerate(self.controlJoints):
             joint = self.joints[name]
             if i==6:
-                targetJointPos = jointPos[i]+action[3]*0.01
+                targetJointPos = jointPos[i]+action[3]*0.001
             else:
                 targetJointPos = jointPos[i]
 
@@ -341,7 +341,7 @@ class UR5_robotiq():
         return currentPose              
 
     def get_state(self):
-        object_pos = [0.6, 0.0, 0.87]
+        object_pos = [0.6, 0.0, 0.92]
         object_ori= [1.57079632679, 0, 0.261799333]
         object_ori= p.getQuaternionFromEuler(object_ori)
         joint_states = p.getJointStates(self.robotID, range(p.getNumJoints(self.robotID)))

@@ -76,7 +76,7 @@ args = parser.parse_args()
 state_size=8
 action_size=3
 
-PATH="./saved_model3/model1500.pth"
+PATH="./saved_model3/model1800.pth"
 actor= torch.load(PATH)
 actor.eval()
 
@@ -126,9 +126,8 @@ def main():
             score += reward
             state = next_state
             if done:
-                env.down(-0.01)
+                env.down(0.02)
                 time.sleep(5)
-                env.down(0.01)
                 break
         
 

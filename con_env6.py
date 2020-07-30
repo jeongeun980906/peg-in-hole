@@ -149,7 +149,7 @@ class UR5_robotiq():
             #print(dis_error,ori_error)
             reward=-1
         
-        if dis_error<0.0001 and ori_error<0.0005:
+        if dis_error<0.0001 and ori_error<0.0001:
             reward=1
             #self.down(0.05)
             print('going in')
@@ -169,7 +169,6 @@ class UR5_robotiq():
         self.state_dict = self.get_state()
         temp=self.getRobotPose()
         # # p.removeAllUserDebugItems()
-        time.sleep(100)
         print('init_pose',temp)
         return self.state_dict
 
@@ -181,7 +180,7 @@ class UR5_robotiq():
             # print(i()
             self.joint = self.joints[name]
             seed=random.random()
-            pose1 = self.init_pose[i]+0.01*(seed-0.5)
+            pose1 = self.init_pose[i]#+0.01*(seed-0.5)
             #p.resetJointState(self.robotID, self.joint.id, targetValue=pose1, targetVelocity=0)
             if i < 6:
                 p.resetJointState(self.robotID, self.joint.id, targetValue=pose1, targetVelocity=0)

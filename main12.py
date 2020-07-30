@@ -209,7 +209,7 @@ def main():
     error=[]
     sigma=0.8
     min_sigma=0.05
-    for epi_n in range(1500):
+    for epi_n in range(3000):
         state = env.reset()
         #pre_noise=np.zeros(action_size)
         done = False

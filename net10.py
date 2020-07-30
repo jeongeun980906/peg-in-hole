@@ -19,7 +19,7 @@ class Actor(nn.Module):
         self.L1=nn.LayerNorm(128)
         self.L2=nn.LayerNorm(128)
         self.L3=nn.LayerNorm(128)
-        self.L4=nn.LayerNorm(3)
+        self.L4=nn.LayerNorm(4)
 
         self.cx=Variable(torch.zeros(1,128)).type(FLOAT)
         self.hx=Variable(torch.zeros(1,128)).type(FLOAT)
