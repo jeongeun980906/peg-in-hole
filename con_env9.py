@@ -139,8 +139,8 @@ class UR5_robotiq():
         self.done=False
         #self.done = self.contact
         info=(dis_error,ori_error)
-        reward=-dis_error/0.05*0.3-ori_error/0.02*0.3-dis_error2/0.01*0.4
-        if dis_error>0.05 or ori_error>0.02:
+        reward=0
+        if dis_error>0.04 or ori_error>0.02:
             self.done=True
             print('out of range')
             #print(dis_error,ori_error)
@@ -300,7 +300,7 @@ class UR5_robotiq():
         for i, name in enumerate(self.controlJoints):
             joint = self.joints[name]
             if i==6:
-                targetJointPos = jointPos[i]+action[3]*0.0001
+                targetJointPos = jointPos[i]+action[3]*0.0005
             else:
                 targetJointPos = jointPos[i]
 
