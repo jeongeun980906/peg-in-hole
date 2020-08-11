@@ -1,7 +1,7 @@
  
 import argparse
 import datetime
-import gym
+#import gym
 import pybullet as p
 import numpy as np
 import itertools
@@ -19,6 +19,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
+import os
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 parser = argparse.ArgumentParser(description='PyTorch Soft Actor-Critic Args')
 parser.add_argument('--env-name', default="Allegro",
@@ -73,9 +76,11 @@ parser.add_argument('--evaluate', type=bool, default=False,
 
 args = parser.parse_args()
 FLOAT = torch.FloatTensor
+device = torch.device("cuda")
+print(device)
 
 state_size=13
-action_size=4
+action_size=6
 #Hyperparameters
 learning_rate = 2e-4 #0.0005
 gamma         = 0.9 #0.98
@@ -83,11 +88,11 @@ batch_size    = 64
 alpha=0.2
 tau=0.1
 
-actor=Actor()
-critic=Critic()
-actor_target=Actor()
-critic_target=Critic()
-rnd=RND()
+actor=Actor().to(device)
+critic=Critic().to(device)
+actor_target=Actor().to(device)
+critic_target=Critic().to(device)
+rnd=RND().to(device)
 
 actor_target.load_state_dict(actor.state_dict())
 critic_target.load_state_dict(critic.state_dict())
@@ -95,7 +100,7 @@ critic_target.load_state_dict(critic.state_dict())
 memory=Memory(5000)
 actor_optimizer = optim.Adam(actor.parameters(), lr=learning_rate)
 critic_optimizer = optim.Adam(critic.parameters(), lr=learning_rate)
-rnd_optimizer = optim.Adam(rnd.parameters(), lr=1e-3)
+rnd_optimizer = optim.Adam(rnd.parameters(), lr=1e-4)
 # Environment
 env = UR5_robotiq(args)
 # env.getCameraImage()
@@ -122,8 +127,6 @@ pose = env.getRobotPose()
 print("Robot final pose")
 print(pose)
 '''
-device = torch.device('cpu')
-
 def soft_update(net,target_net):
     for param, target_param in zip(net.parameters(),target_net.parameters()):
         target_param.data.copy_(tau*param.data+(1.0-tau)*target_param.data)
@@ -152,11 +155,11 @@ def train():
     masks = list(mini_batch[4]) 
 
     # tensor.
-    states = torch.Tensor(states)
-    actions = torch.Tensor(actions)
-    rewards = torch.Tensor(rewards) 
-    next_states = torch.Tensor(next_states)
-    masks = torch.Tensor(masks)
+    states = torch.Tensor(states).to(device)
+    actions = torch.Tensor(actions).to(device)
+    rewards = torch.Tensor(rewards).to(device)
+    next_states = torch.Tensor(next_states).to(device)
+    masks = torch.Tensor(masks).to(device)
     # actor loss
     actor_loss = -critic(states, actor(states)).mean()
     #critic loss
@@ -189,12 +192,13 @@ def train():
 
 MSE = torch.nn.MSELoss()
 def in_reward(state):
-    target,predictor=rnd(torch.FloatTensor(state))
-    loss=torch.tanh(MSE(target,predictor)).item()
-    r_i=(loss-1)*0.2
+    target,predictor=rnd(torch.FloatTensor(state).to(device))
+    loss=torch.sigmoid(MSE(target,predictor)).item()
+    r_i=loss*0.2
     return r_i
 
 def main():
+    #env.lol()
     flag = 0
     flag2 = 0
     print_interval = 20 
@@ -215,21 +219,20 @@ def main():
         done = False
         step = 0
         score = 0
-        if epi_n > 500 and epi_n%20==0:
-            torch.save(actor,"./saved_model44/model"+str(epi_n)+".pth")
+        #if epi_n > 500 and epi_n%20==0:
+        #    torch.save(actor,"./saved_model44/model"+str(epi_n)+".pth")
         while not done:
             step += 1
             global_step+=1
-            action = actor(torch.FloatTensor(state))
+            action = actor(torch.FloatTensor(state).to(device))
             #print(action)
             #noise=ou_noise(pre_noise,action_size,sigma)
             if sigma>min_sigma:
-                noise=my_noise(action.detach().numpy(),action_size,sigma)
+                noise=my_noise(action.detach().cpu().numpy(),action_size,sigma)
             
             else:
                 noise=gaussian_noise(action_size,sigma)
-            action=(action+torch.Tensor(noise)).clamp(-1.0,1.0)
-            #print(noise,action)
+            action=(action.cpu()+torch.Tensor(noise)).clamp(-1.0,1.0)
             next_state, reward, done, info= env.step(list(action))
             
             r_i=in_reward(next_state)

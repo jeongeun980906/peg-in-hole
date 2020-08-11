@@ -21,8 +21,8 @@ class Actor(nn.Module):
         self.L3=nn.LayerNorm(128)
         self.L4=nn.LayerNorm(4)
 
-        self.cx=Variable(torch.zeros(1,128)).type(FLOAT)
-        self.hx=Variable(torch.zeros(1,128)).type(FLOAT)
+        self.cx=Variable(torch.zeros(1,128)).type(FLOAT).to('cuda')
+        self.hx=Variable(torch.zeros(1,128)).type(FLOAT).to('cuda')
 
         nn.init.kaiming_normal_(self.fc1.weight.data)
         nn.init.kaiming_normal_(self.fc2.weight.data)
@@ -51,11 +51,11 @@ class Actor(nn.Module):
     
     def reset(self,done=True):
         if done==True:
-           self.cx=Variable(torch.zeros(1,128)).type(FLOAT)
-           self.hx=Variable(torch.zeros(1,128)).type(FLOAT)
+           self.cx=Variable(torch.zeros(1,128)).type(FLOAT).to('cuda')
+           self.hx=Variable(torch.zeros(1,128)).type(FLOAT).to('cuda')
         else:
-            self.cx=Variable(self.cx.data).type(FLOAT)
-            self.hx=Variable(self.hx.data).type(FLOAT)
+            self.cx=Variable(self.cx.data).type(FLOAT).to('cuda')
+            self.hx=Variable(self.hx.data).type(FLOAT).to('cuda')
 
 
 class Critic(nn.Module):

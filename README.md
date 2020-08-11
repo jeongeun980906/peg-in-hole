@@ -10,4 +10,5 @@
 # main10 - RDPG -> 4 action dim env8 
 # main11 - joint control with ddpg
 # main12 - DDPG-with PER with 4 action dim env8
-# main13 - DDPG with RND, sparse reward
+# main13 - DDPG with RND, sparse reward 6action space with new move tool
+

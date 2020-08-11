@@ -19,6 +19,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
+import os
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 parser = argparse.ArgumentParser(description='PyTorch Soft Actor-Critic Args')
 parser.add_argument('--env-name', default="Allegro",
@@ -72,6 +75,8 @@ parser.add_argument('--evaluate', type=bool, default=False,
                     help='evaluate (default: False)')
 
 args = parser.parse_args()
+device = torch.device("cuda")
+print(device)
 
 state_size=19
 action_size=6
@@ -82,10 +87,10 @@ batch_size    = 256
 alpha=0.2
 tau=0.1
 
-actor=Actor()
-critic=Critic()
-actor_target=Actor()
-critic_target=Critic()
+actor=Actor().to(device)
+critic=Critic().to(device)
+actor_target=Actor().to(device)
+critic_target=Critic().to(device)
 
 actor_target.load_state_dict(actor.state_dict())
 critic_target.load_state_dict(critic.state_dict())
@@ -119,7 +124,6 @@ pose = env.getRobotPose()
 print("Robot final pose")
 print(pose)
 '''
-device = torch.device('cpu')
 #0.01 )
 
 def soft_update(net,target_net):
@@ -156,11 +160,11 @@ def train():
     masks = list(mini_batch[4]) 
 
     # tensor.
-    states = torch.Tensor(states)
-    actions = torch.Tensor(actions)
-    rewards = torch.Tensor(rewards) 
-    next_states = torch.Tensor(next_states)
-    masks = torch.Tensor(masks)
+    states = torch.Tensor(states).to(device)
+    actions = torch.Tensor(actions).to(device)
+    rewards = torch.Tensor(rewards).to(device)
+    next_states = torch.Tensor(next_states).to(device)
+    masks = torch.Tensor(masks).to(device)
     # actor loss
     actor_loss = -critic(states, actor(states)).mean()
     #critic loss
@@ -170,7 +174,7 @@ def train():
     q_value = critic(states, actions).squeeze(1)
     critic_loss = MSE(q_value, target.detach())
     
-    errors=torch.abs(q_value-target.detach()).data.numpy()
+    errors=torch.abs(q_value-target.detach()).data.cpu().numpy()
     memory.batch_update(tree_idx,errors)
     
     # backward.
@@ -212,15 +216,15 @@ def main():
         while not done:
             step += 1
             global_step+=1
-            action = actor(torch.FloatTensor(state))
+            action = actor(torch.FloatTensor(state).to(device))
             #print(action)
             #noise=ou_noise(pre_noise,action_size,sigma)
             if sigma>min_sigma:
-                noise=my_noise(action.detach().numpy(),action_size,sigma)
+                noise=my_noise(action.detach().cpu().numpy(),action_size,sigma)
             
             else:
                 noise=gaussian_noise(action_size,sigma)
-            action=(action+torch.Tensor(noise)).clamp(-1.0,1.0)
+            action=(action.cpu()+torch.Tensor(noise)).clamp(-1.0,1.0)
             #print(noise,action)
             next_state, reward, done, info= env.step(list(action))
             mask =0  if done else 1

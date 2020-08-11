@@ -139,12 +139,12 @@ class UR5_robotiq():
         self.done=False
         #self.done = self.contact
         info=(dis_error,ori_error)
-        reward=-dis_error/0.05*0.3-ori_error/0.02*0.3-dis_error2/0.01*0.4
+        reward=-dis_error/0.05*0.3-ori_error/0.02*0.3-dis_error2/0.01*0.4+1
         if dis_error>0.05 or ori_error>0.02:
             self.done=True
             print('out of range')
             #print(dis_error,ori_error)
-            reward=-1
+            reward=-100
         
         if dis_error<0.005 and ori_error<0.0005:
             reward=1
