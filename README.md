@@ -8,7 +8,10 @@
 # main7 - DDPG-with PER with 3 action dim 
 # main8 - DDPG with sparse reward + HER
 # main10 - RDPG -> 4 action dim env8 
+* env 10 with 6 action
 # main11 - joint control with ddpg
 # main12 - DDPG-with PER with 4 action dim env8
-# main13 - DDPG with RND, sparse reward 6action space with new move tool
+# main13 - DDPG with RND, sparse reward
+* 6 action space with new move tool
+* env 9
 
