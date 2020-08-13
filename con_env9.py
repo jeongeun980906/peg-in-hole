@@ -191,10 +191,10 @@ class UR5_robotiq():
                                         force = joint.maxForce)
         for _ in range(500):
             p.stepSimulation()
-        robotTransVel, robotAngularVel = self.getRobotVel(1)
-        robotVel = robotTransVel + robotAngularVel
+        #robotTransVel, robotAngularVel = self.getRobotVel(1)
+        #robotVel = robotTransVel + robotAngularVel
         #robotVel = [0.0] * 6
-        print("robotVel: {}".format(robotVel))
+        #print("robotVel: {}".format(robotVel))
     
     def home_pose(self):
         for i, name in enumerate(self.controlJoints):
@@ -270,9 +270,9 @@ class UR5_robotiq():
         for i in range(2):
             targetPos[i] = currentPose[i] + 0.0005* action[i].item()
         targetPos[2] = currentPose[2] - 0.0005 * (action[2].item()+0.8)
-        targetPos[3] = currentPose[3]+0.0002 * action[3].item()
-        targetPos[4] = currentPose[4]+0.0002 * action[4].item()
-        targetPos[5] = currentPose[5] + 0.0002 * action[5].item()
+        targetPos[3] = currentPose[3]#+0.0002 * action[3].item()
+        targetPos[4] = currentPose[4]#+0.0002 * action[4].item()
+        targetPos[5] = currentPose[5] + 0.0002 * action[3].item()
         ## Set desired force
         DForce = [0.0] * 6
 
@@ -459,7 +459,7 @@ class UR5_robotiq():
 
 
             p.stepSimulation()
-            time.sleep(self.ctrlPeriod)
+            #time.sleep(self.ctrlPeriod)
 
         self.controlInit = True
     

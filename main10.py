@@ -8,7 +8,7 @@ import itertools
 import torch
 import time
 
-from con_env8 import UR5_robotiq
+from con_env10 import UR5_robotiq
 from net10 import Actor, Critic
 from collections import deque
 from matplotlib import pyplot as plt
@@ -82,9 +82,9 @@ print(device)
 state_size=13
 action_size=4
 #Hyperparameters
-learning_rate = 2e-4 #0.0005
-gamma         = 0.7 #0.98
-batch_size    = 64
+learning_rate = 1e-4 #0.0005
+gamma         = 0.99 #0.98
+batch_size    = 128
 alpha=0.2
 tau=0.1
 
@@ -222,6 +222,7 @@ def main():
     error=[]
     sigma=0.8
     min_sigma=0.05
+    flag2=0
     for epi_n in range(2000):
         state = env.reset()
         #pre_noise=np.zeros(action_size)
@@ -236,7 +237,7 @@ def main():
             action, _ = actor(torch.FloatTensor(state).to(device))
             action=action[0]
             #noise=ou_noise(pre_noise,action_size,sigma)
-            if sigma>min_sigma:
+            if sigma>min_sigma and flag2==0:
                 noise=my_noise(action.detach().cpu().numpy(),action_size,sigma)
             
             else:
@@ -245,33 +246,32 @@ def main():
             #print(noise,action)
             next_state, reward, done, info= env.step(list(action))
             a=action.detach().numpy()
-            
             memory.append(state,a,reward,done)
             #memory.append((state, a, reward, next_state,  mask))
-            if epi_n>65:
+            if epi_n>145:
                 actor.reset(done=done)
                 train()
             score += reward
             state = next_state
 
-            if step>100 or done==True:
+            if step>50 or done==True:
                 #actor.reset(done=True)
                 if reward==1:
                     succ.append(1)
                 else:
                     succ.append(0)
                 if sigma>min_sigma:
-                    sigma*=0.995
+                    sigma*=0.999
                 else:
                     sigma=min_sigma
                     flag+=1
                 
-                if flag==1:
+                if flag==1 and flag2==0:
                     sigma=0.4
-                    flag=-100000
+                    flag2=1
                 
                 F.append(score)
-                error.append(info[0]+info[1])
+                error.append(info)
                 epi.append(epi_n)
                 print('n_episode: ',epi_n,'score: ',score,'step: ',step,'noise: ',sigma)
                 if epi_n>500:
@@ -292,9 +292,6 @@ def main():
     plt.plot(avg2)
     plt.subplot(223)
     plt.plot(avg3)
-    f = open("saved_model2/fig.txt", 'w')
-    f.write(str(succ))
-    f.close()
     plt.show()
                    
     env.close()

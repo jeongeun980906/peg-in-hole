@@ -135,16 +135,18 @@ class UR5_robotiq():
         dis_error=np.linalg.norm(rel_pose2, axis=-1, ord=2)
         dis_error2=np.linalg.norm(rel_pose1, axis=-1, ord=2)
         ori_error=np.linalg.norm(rel_ori, axis=-1, ord=2)
+        tot=np.concatenate((rel_pose2,rel_ori),axis=None)
+        tot_error=np.linalg.norm(tot, axis=-1, ord=2)
         #force=self.next_state_dict[7]
         self.done=False
         #self.done = self.contact
-        info=(dis_error,ori_error)
-        reward=-dis_error/0.05*0.3-ori_error/0.02*0.3-dis_error2/0.01*0.4+1
-        if dis_error>0.05 or ori_error>0.02:
+        info=tot_error
+        reward=-(tot_error-0.03)/0.02+1
+        if tot_error>0.05:
             self.done=True
             print('out of range')
             #print(dis_error,ori_error)
-            reward=-100
+            reward=0
         
         if dis_error<0.005 and ori_error<0.0005:
             reward=1
@@ -300,7 +302,7 @@ class UR5_robotiq():
         for i, name in enumerate(self.controlJoints):
             joint = self.joints[name]
             if i==6:
-                targetJointPos = jointPos[i]+action[3]*0.0001
+                targetJointPos = jointPos[i]+action[3]*0.0005
             else:
                 targetJointPos = jointPos[i]
 

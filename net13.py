@@ -12,12 +12,12 @@ class Actor(nn.Module):
         self.fc1 = nn.Linear(13, 128)
         self.fc2 = nn.Linear(128, 128)
         self.fc3 = nn.Linear(128, 128)
-        self.fc4 = nn.Linear(128, 6)
+        self.fc4 = nn.Linear(128, 4)
         
         self.L1=nn.LayerNorm(128)
         self.L2=nn.LayerNorm(128)
         self.L3=nn.LayerNorm(128)
-        self.L4=nn.LayerNorm(6)
+        self.L4=nn.LayerNorm(4)
 
         nn.init.kaiming_normal_(self.fc1.weight.data)
         nn.init.kaiming_normal_(self.fc2.weight.data)
@@ -48,7 +48,7 @@ class Critic(nn.Module):
         nn.init.kaiming_normal_(self.fc2_1.weight.data)
         
         #self.fc1_1=nn.LSTM(3,128,1)
-        self.fc1_1 = nn.Linear(6, 128)
+        self.fc1_1 = nn.Linear(4, 128)
         self.L2=nn.LayerNorm(128)
         self.fc2_2 = nn.Linear(128,64)
         self.fc3 = nn.Linear(128, 128)

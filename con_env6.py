@@ -47,7 +47,7 @@ class UR5_robotiq():
         self.action_space = Box(-ACTION_RANGE, ACTION_RANGE, (4,))
 
         self.init_pose = [-0.18309111934162953, -1.14033624468874, 1.7881880745399235, -2.2527808767352, -1.570780829840282, -0.4448710813788053]
-        self.goal_pose=[-0.1830197380957823, -1.0908494021052788, 1.7952853703555125, -2.275321638666715, -1.5707920663516683, -0.4448227675725946]
+        self.goal_pose=[-0.18217085053126741, -1.0888349322673838, 1.7885572366095182, -2.2700220833345726, -1.5708354298186675, -0.44392445269858893]
 
         self.home_pose()
         p.stepSimulation()
@@ -86,15 +86,36 @@ class UR5_robotiq():
         tableStartOrientation = p.getQuaternionFromEuler([0, 0, 90.0*Deg2Rad])
         self.tableID = p.loadURDF("./urdf/objects/table.urdf", tableStartPos, tableStartOrientation,useFixedBase = True, flags=p.URDF_USE_INERTIA_FROM_FILE)
         
-        # define environment
-        self.holePos = [0.6, 0.0, 0.87]
         #self.holePos = [0.6, 0.0, 1.02]
+        # define environment
+        self.holePos = [0.5, 0.02, 0.87]
         self.holeOri = p.getQuaternionFromEuler([1.57079632679, 0, 0.261799333]) #.261799333
         
+        # self.boxId1 = p.loadURDF(
+        # "./urdf/peg_hole_gazebo/hole/urdf/new_hole1.urdf",
+        # self.holePos, self.holeOri,
+        # flags = p.URDF_USE_INERTIA_FROM_FILE,useFixedBase=True)
+
+        # self.boxId2 = p.loadURDF(
+        # "./urdf/peg_hole_gazebo/hole/urdf/new_hole2.urdf",
+        # self.holePos, self.holeOri,
+        # flags = p.URDF_USE_INERTIA_FROM_FILE,useFixedBase=True)
+
+        # self.boxId3 = p.loadURDF(
+        # "./urdf/peg_hole_gazebo/hole/urdf/new_hole3.urdf",
+        # self.holePos, self.holeOri,
+        # flags = p.URDF_USE_INERTIA_FROM_FILE,useFixedBase=True)
+
         self.boxId = p.loadURDF(
-        "./urdf/peg_hole_gazebo/hole/urdf/hole.SLDPRT.urdf",
+        "./urdf/peg_hole_gazebo/hole/urdf/new_hole1.urdf",
         self.holePos, self.holeOri,
         flags = p.URDF_USE_INERTIA_FROM_FILE,useFixedBase=True)
+        # self.boxId = p.loadURDF(
+        # "./urdf/peg_hole_gazebo/hole/urdf/hole.SLDPRT.urdf",
+        # self.holePos, self.holeOri,
+        # flags = p.URDF_USE_INERTIA_FROM_FILE,useFixedBase=True)
+        
+        self.goalOri=[ 0.18475636839866638, 0.6970293521881104, -0.15855400264263153, 0.6744447946548462]
         #self.boxId = p.loadURDF(
         #"./urdf/peg_hole_gazebo/hole/urdf/new_hole.urdf",
         #self.holePos, self.holeOri,
@@ -250,16 +271,17 @@ class UR5_robotiq():
     def down(self,l,setTime=0.01):
         stepSize = 240*setTime
         currentPose = self.getRobotPose()
-            
+        print('c',currentPose)
+        #time.sleep(5)
         stepPos=[]
         stepOri=[]
-        stepPos.append(currentPose[0])
-        stepPos.append(currentPose[1])
+        stepPos.append(currentPose[0]-0.0005)
+        stepPos.append(currentPose[1]-0.0005)
         stepPos.append(currentPose[2]-l)
         stepOri.append(currentPose[3])
-        stepOri.append(0.7011236967207826)
-        stepOri.append(-currentPose[3])
-        stepOri.append(0.7011236967207826)
+        stepOri.append(currentPose[4])
+        stepOri.append(currentPose[5])
+        stepOri.append(currentPose[6])
 
         jointPos = p.calculateInverseKinematics(self.robotID,
                                                     self.eefID,
@@ -268,7 +290,7 @@ class UR5_robotiq():
         for i, name in enumerate(self.controlJoints):
             joint = self.joints[name]
             targetJointPos = jointPos[i]
-            print(targetJointPos)
+            #print(targetJointPos)
             p.setJointMotorControl2(self.robotID,
                                         joint.id,
                                         p.POSITION_CONTROL,
@@ -280,7 +302,7 @@ class UR5_robotiq():
             # p.addUserDebugLine((0.6475237011909485, 0.6443161964416504, 0.9296525716781616),(0,0,0))
         # for i in range(10):
             
-        for _ in range(50):
+        for _ in range(1000):
             p.stepSimulation()
     
     def move(self, action,setTime=0.01):
@@ -398,7 +420,7 @@ class UR5_robotiq():
         object_pos=[]
         for i in range(3):
             if i==2:
-                object_pos.append(self.holePos[i]+0.09)
+                object_pos.append(self.holePos[i]+0.06)
             else:
                 object_pos.append(self.holePos[i])
         currentPose = self.getRobotPoseE()

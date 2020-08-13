@@ -1,4 +1,3 @@
- 
 import argparse
 import datetime
 import gym
@@ -101,7 +100,6 @@ print(env.holePos)
 # torch.cuda.device(0)
 # cuda = torch.device('cuda')
 '''
-
 pose = env.getRobotPose()
 print("Robot final pose")
 print(pose)

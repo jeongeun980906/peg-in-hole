@@ -80,7 +80,7 @@ device = torch.device("cuda")
 print(device)
 
 state_size=13
-action_size=6
+action_size=4
 #Hyperparameters
 learning_rate = 2e-4 #0.0005
 gamma         = 0.9 #0.98
@@ -100,7 +100,7 @@ critic_target.load_state_dict(critic.state_dict())
 memory=Memory(5000)
 actor_optimizer = optim.Adam(actor.parameters(), lr=learning_rate)
 critic_optimizer = optim.Adam(critic.parameters(), lr=learning_rate)
-rnd_optimizer = optim.Adam(rnd.parameters(), lr=1e-4)
+rnd_optimizer = optim.Adam(rnd.parameters(), lr=5e-4)
 # Environment
 env = UR5_robotiq(args)
 # env.getCameraImage()
@@ -171,7 +171,7 @@ def train():
     
     predict_rnd,target_rnd=rnd(next_states)
     rnd_loss=MSE(predict_rnd,target_rnd)
-    errors=torch.abs(q_value-target.detach()).data.numpy()
+    errors=torch.abs(q_value-target.detach()).data.cpu().numpy()
     memory.batch_update(tree_idx,errors)
     
     # backward.
@@ -195,6 +195,7 @@ def in_reward(state):
     target,predictor=rnd(torch.FloatTensor(state).to(device))
     loss=torch.sigmoid(MSE(target,predictor)).item()
     r_i=loss*0.2
+    #print(r_i)
     return r_i
 
 def main():
