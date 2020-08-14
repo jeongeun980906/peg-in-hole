@@ -8,7 +8,7 @@ import itertools
 import torch
 import time
 
-from con_env10 import UR5_robotiq
+from con_env12 import UR5_robotiq
 
 from collections import deque
 from matplotlib import pyplot as plt
@@ -129,10 +129,11 @@ def main():
             #next_state, reward, done, info= env.step(list(action))
             # print('error',info,'next_state',next_state)
             # for _ in range(50):
-        #env.down(0.1)
-        env.AdmittanceCtrl([0.0,0.0,-80.0,0.0])
+        env.down(-0.08)
+        #env.AdmittanceCtrl([0.0,0.0,-80.0,0.0])
         time.sleep(2)
-        env.AdmittanceCtrl([0.0,0.0,80.0,0.0])
+        env.down(0.08)
+        #env.AdmittanceCtrl([0.0,0.0,80.0,0.0])
         time.sleep(2)
         Pos=env.getRobotPoseE()
         print("Pose: {}".format(Pos))

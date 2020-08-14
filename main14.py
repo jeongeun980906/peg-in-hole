@@ -82,7 +82,7 @@ print(device)
 state_size=13
 action_size=4
 #Hyperparameters
-learning_rate = 1e-4 #0.0005
+learning_rate = 5e-4 #0.0005
 gamma         = 0.99 #0.98
 batch_size    = 64
 alpha=0.2

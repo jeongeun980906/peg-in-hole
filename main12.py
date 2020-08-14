@@ -8,7 +8,7 @@ import itertools
 import torch
 import time
 
-from con_env10 import UR5_robotiq
+from con_env8 import UR5_robotiq
 from net10 import Actor, Critic
 from collections import deque
 from matplotlib import pyplot as plt
@@ -82,7 +82,7 @@ print(device)
 state_size=13
 action_size=4
 #Hyperparameters
-learning_rate = 1e-4 #0.0005
+learning_rate = 2e-4 #0.0005
 gamma         = 0.99 #0.98
 batch_size    = 128
 alpha=0.2
@@ -96,7 +96,7 @@ critic_target=Critic().to(device)
 actor_target.load_state_dict(actor.state_dict())
 critic_target.load_state_dict(critic.state_dict())
 
-memory=EpisodicMemory(10000,50,window_length=1)
+memory=EpisodicMemory(100000,150,window_length=1)
 actor_optimizer = optim.Adam(actor.parameters(), lr=learning_rate)
 critic_optimizer = optim.Adam(critic.parameters(), lr=learning_rate)
 # Environment
@@ -220,15 +220,16 @@ def main():
     avg2=[]
     avg3=[]
     error=[]
+    flag2=0
     sigma=0.8
     min_sigma=0.05
-    for epi_n in range(4000):
+    for epi_n in range(3000):
         state = env.reset()
         #pre_noise=np.zeros(action_size)
         done = False
         step = 0
         score = 0
-        if epi_n > 500 and epi_n%20==0:
+        if epi_n > 1000 and epi_n%20==0:
             torch.save(actor,"./saved_model44/model"+str(epi_n)+".pth")
         while not done:
             step += 1
@@ -251,32 +252,31 @@ def main():
             if epi_n>145:
                 actor.reset(done=done)
                 train()
-            score += reward
+            score = reward + gamma*score
             state = next_state
 
-            if step>100 or done==True:
+            if step>150 or done==True:
                 #actor.reset(done=True)
-                if reward==1:
+                if reward>2:
                     succ.append(1)
                 else:
                     succ.append(0)
                 if sigma>min_sigma:
-                    sigma*=0.999
+                    sigma*=0.995
                 else:
                     sigma=min_sigma
                     flag+=1
                 
-                if flag==1:
+                if flag==1 and flag2==0:
                     sigma=0.4
-                    flag=-100000
-                
+                    flag2=1
                 F.append(score)
                 error.append(info)
                 epi.append(epi_n)
                 print('n_episode: ',epi_n,'score: ',score,'step: ',step,'noise: ',sigma)
                 if epi_n>500:
                     print('error: ',info)
-                break 
+                break
         if epi_n%10==0 and epi_n >0:
             avg1.append(sum(F)/len(F))
             F=[]

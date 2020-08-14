@@ -11,14 +11,14 @@ FLOAT = torch.FloatTensor
 class Actor(nn.Module):
     def __init__(self):
         super(Actor, self).__init__()
-        self.fc1 = nn.Linear(13, 256)
-        self.fc2 = nn.Linear(256, 256)
+        self.fc1 = nn.Linear(13, 128)
+        self.fc2 = nn.Linear(128, 128)
         #self.fc3 = nn.Linear(256, 256)
-        self.fc4 = nn.LSTMCell(256, 128)
+        self.fc4 = nn.LSTMCell(128, 128)
         self.fc5 = nn.Linear(128, 4)
         
-        self.L1=nn.LayerNorm(256)
-        self.L2=nn.LayerNorm(256)
+        self.L1=nn.LayerNorm(128)
+        self.L2=nn.LayerNorm(128)
         #self.L3=nn.LayerNorm(256)
         self.L4=nn.LayerNorm(128)
         self.L5=nn.LayerNorm(4)
@@ -65,9 +65,9 @@ class Actor(nn.Module):
 class Critic(nn.Module):
     def __init__(self):
         super(Critic, self).__init__()
-        self.fc1 = nn.Linear(13, 256)
-        self.fc2_1 = nn.Linear(256, 128)
-        self.L1=nn.LayerNorm(256)
+        self.fc1 = nn.Linear(13, 128)
+        self.fc2_1 = nn.Linear(128, 128)
+        self.L1=nn.LayerNorm(128)
 
         nn.init.kaiming_normal_(self.fc1.weight.data)
         nn.init.kaiming_normal_(self.fc2_1.weight.data)

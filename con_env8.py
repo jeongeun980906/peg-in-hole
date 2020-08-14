@@ -46,7 +46,7 @@ class UR5_robotiq():
         self.observation_space = 39     # Input size
         self.action_space = Box(-ACTION_RANGE, ACTION_RANGE, (4,))
 
-        self.init_pose = [-0.18309111934162953, -1.14033624468874, 1.7881880745399235, -2.2527808767352, -1.570780829840282, -0.4448227675725946]
+        self.init_pose = [-0.18293805373028393, -1.1209140643403597, 1.778449642199667, -2.2283957002700183, -1.5707963018441111, -0.4447348731959547]
         self.goal_pose=[-0.1830197380957823, -1.0908494021052788, 1.7952853703555125, -2.275321638666715, -1.5707920663516683, -0.4448227675725946]
 
         self.home_pose()
@@ -59,7 +59,8 @@ class UR5_robotiq():
 
 
     def loadURDF_all(self):
-        self.UR5UrdfPath = "./urdf/ur5_peg.urdf"
+        self.UR5UrdfPath = "./urdf/ur5_peg_2.urdf"
+        #self.UR5UrdfPath = "./urdf/ur5_peg.urdf"
         # self.UR5UrdfPath = "./urdf/ur5_robotiq85.urdf"
 
         # connect to engine servers
@@ -87,12 +88,12 @@ class UR5_robotiq():
         self.tableID = p.loadURDF("./urdf/objects/table.urdf", tableStartPos, tableStartOrientation,useFixedBase = True, flags=p.URDF_USE_INERTIA_FROM_FILE)
         
         # define environment
-        self.holePos = [0.6, 0.0, 0.87]
-        #self.holePos = [0.6, 0.0, 1.02]
-        self.holeOri = p.getQuaternionFromEuler([1.57079632679, 0, 0.261799333]) #.261799333
+        self.holePos = [0.6, 0.0 , 0.85]
+        #self.holePos = [0.65, 0.025, 0.87]
+        self.holeOri = p.getQuaternionFromEuler([0, 0, 0.261799333])
         
         self.boxId = p.loadURDF(
-        "./urdf/peg_hole_gazebo/hole/urdf/hole.SLDPRT.urdf",
+        "./urdf/peg_hole_gazebo/hole/urdf/new_hole_2.urdf",
         self.holePos, self.holeOri,
         flags = p.URDF_USE_INERTIA_FROM_FILE,useFixedBase=True)
         #self.boxId = p.loadURDF(
@@ -141,22 +142,22 @@ class UR5_robotiq():
         self.done=False
         #self.done = self.contact
         info=tot_error
-        reward=-(tot_error-0.03)/0.02+1
-        if tot_error>0.05:
+        reward=-(tot_error-0.01)/0.025+1
+        if tot_error>0.035:
             self.done=True
             print('out of range')
             #print(dis_error,ori_error)
-            reward=0
+            reward=-1
         
-        if dis_error<0.005 and ori_error<0.0005:
-            reward=1
+        if dis_error<0.01:
+            reward=30
             #self.down(0.05)
             print('going in')
             self.done=True
         
-        if self.contact==():
+        #if self.contact==():
             #reward-=0.5
-            self.down(0.005)
+            #self.down(0.005)
         #else:
             #reward-=temp
         #print(reward)
@@ -288,8 +289,8 @@ class UR5_robotiq():
         stepPos=[]
         stepOri=[]
         for i in range(2):
-            stepPos.append(currentPose[i] + 0.0002* action[i])
-        stepPos.append(currentPose[2] - 0.002* (action[2]+1))
+            stepPos.append(currentPose[i] + 0.0005* action[i])
+        stepPos.append(currentPose[2] - 0.002* (action[2]+0.9))
         stepOri.append(currentPose[3])
         stepOri.append(0.7011236967207826)
         stepOri.append(-currentPose[3])

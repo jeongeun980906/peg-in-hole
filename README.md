@@ -9,8 +9,7 @@
 ### main8 - DDPG with sparse reward + HER
 ### main10 - RDPG -> 4 action dim env8 
 * simple move, dense reward
-* env10 new move
-    smaller net vs larger net
+* 
 ### main11 - joint control with ddpg
 ### main12 - ????
 ### main13 - DDPG with RND, sparse reward

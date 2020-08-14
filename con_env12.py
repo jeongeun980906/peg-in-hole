@@ -94,15 +94,31 @@ class UR5_robotiq():
         self.tableID = p.loadURDF("./urdf/objects/table.urdf", tableStartPos, tableStartOrientation,useFixedBase = True, flags=p.URDF_USE_INERTIA_FROM_FILE)
         
         # define environment
-        
-        self.holePos = [0.6, 0.0 , 0.85]
+        #self.holePos = [0.6, 0.0 , 0.86]
+        self.holePos = [0.6, 0.0 , 0.89]
         #self.holePos = [0.65, 0.025, 0.87]
-        self.holeOri = p.getQuaternionFromEuler([0, 0, 0.261799333]) #.261799333
+        #self.holeOri = p.getQuaternionFromEuler([0, 0, 0.261799333])
+        self.holeOri = p.getQuaternionFromEuler([1.57079632679, 0, 0.261799333]) #.261799333
         #self.holeOri = p.getQuaternionFromEuler([1.57079632679, 0, 0.261799333])
         self.boxID = p.loadURDF(
-        "./urdf/peg_hole_gazebo/hole/urdf/new_hole_2.urdf",
+        "./urdf/peg_hole_gazebo/hole/urdf/new_hole3.urdf",
         self.holePos, self.holeOri,
         flags = p.URDF_USE_INERTIA_FROM_FILE,useFixedBase=True)
+
+        self.boxID2 = p.loadURDF(
+        "./urdf/peg_hole_gazebo/hole/urdf/new_hole2.urdf",
+        self.holePos, self.holeOri,
+        flags = p.URDF_USE_INERTIA_FROM_FILE,useFixedBase=True)
+
+        # self.boxID3 = p.loadURDF(
+        # "./urdf/peg_hole_gazebo/hole/urdf/new_hole1.urdf",
+        # self.holePos, self.holeOri,
+        # flags = p.URDF_USE_INERTIA_FROM_FILE,useFixedBase=True)
+
+        # self.boxID4 = p.loadURDF(
+        # "./urdf/peg_hole_gazebo/hole/urdf/new_hole4.urdf",
+        # self.holePos, self.holeOri,
+        # flags = p.URDF_USE_INERTIA_FROM_FILE,useFixedBase=True)
 
         # self.boxID = p.loadURDF(
         # "./urdf/peg_hole_gazebo/hole/urdf/hole.SLDPRT.urdf",
@@ -213,7 +229,7 @@ class UR5_robotiq():
             # print(i()
             self.joint = self.joints[name]
             seed=random.random()
-            pose1 = self.init_pose[i]+0.01*(seed-0.5)
+            pose1 = self.goal_pose[i]+0.01*(seed-0.5)
             #p.resetJointState(self.robotID, self.joint.id, targetValue=pose1, targetVelocity=0)
             if i < 6:
                 p.resetJointState(self.robotID, self.joint.id, targetValue=pose1, targetVelocity=1e-5)
@@ -271,8 +287,8 @@ class UR5_robotiq():
         #time.sleep(5)
         stepPos=[]
         stepOri=[]
-        stepPos.append(currentPose[0]-0.0005)
-        stepPos.append(currentPose[1]-0.0005)
+        stepPos.append(currentPose[0])
+        stepPos.append(currentPose[1])
         stepPos.append(currentPose[2]-l)
         stepOri.append(currentPose[3])
         stepOri.append(currentPose[4])

@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.5.1-0-g916b5db  Build Version: 1.5.7152.31018
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="hole.SLDPRT">
+  <link
+    name="hole1">
+    <inertial>
+      <origin
+        xyz="-0.051 0.051 0.0"
+        rpy="0 0 0" />
+      <mass
+        value="5.0" />
+      <inertia
+        ixx="0.003"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.003"
+        iyz="0.0"
+        izz="0.003" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="-0.051 0.051 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box 
+	  size="0.051 0.051 0.052" />
+      </geometry>
+      <material
+        name="stainless">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="-0.051 0.051 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box 
+	  size="0.051 0.051 0.052" />
+      </geometry>
+    </collision>
+  <gazebo>
+    <static>true</static>
+  </gazebo>
+
+  </link>
+  
+  <joint name="joint1" type="fixed">
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+    <parent link="hole1"/>
+    <child link="hole2"/>
+  </joint>
+
+  <link
+    name="hole2">
+    <inertial>
+      <origin
+        xyz="0.0 0.051 0.0"
+        rpy="0 0 0" />
+      <mass
+        value="5.0" />
+      <inertia
+        ixx="0.003"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.003"
+        iyz="0.0"
+        izz="0.003" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0.0 0.051 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box 
+	  size="0.051 0.051 0.052" />
+      </geometry>
+      <material
+        name="stainless">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0.0 0.051 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box 
+	  size="0.051 0.051 0.052" />
+      </geometry>
+    </collision>
+  <gazebo>
+    <static>true</static>
+  </gazebo>
+  </link>
+
+  <joint name="joint2" type="fixed">
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+    <parent link="hole2"/>
+    <child link="hole3"/>
+  </joint>
+
+  <link
+    name="hole3">
+    <inertial>
+      <origin
+        xyz="0.051 0.051 0.0"
+        rpy="0 0 0" />
+      <mass
+        value="5.0" />
+      <inertia
+        ixx="0.003"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.003"
+        iyz="0.0"
+        izz="0.003" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0.051 0.051 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box 
+	  size="0.051 0.051 0.052" />
+      </geometry>
+      <material
+        name="stainless">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0.051 0.051 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box 
+	  size="0.051 0.051 0.052" />
+      </geometry>
+    </collision>
+  <gazebo>
+    <static>true</static>
+  </gazebo>
+  </link>
+
+  <joint name="joint3" type="fixed">
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+    <parent link="hole3"/>
+    <child link="hole4"/>
+  </joint>
+
+  <link
+    name="hole4">
+    <inertial>
+      <origin
+        xyz="0.051 0.0 0.0"
+        rpy="0 0 0" />
+      <mass
+        value="5.0" />
+      <inertia
+        ixx="0.003"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.003"
+        iyz="0.0"
+        izz="0.003" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0.051 0.0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box 
+	  size="0.051 0.051 0.052" />
+      </geometry>
+      <material
+        name="stainless">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0.051 0.0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box 
+	  size="0.051 0.051 0.052" />
+      </geometry>
+    </collision>
+  <gazebo>
+    <static>true</static>
+  </gazebo>
+  </link>
+
+  <joint name="joint4" type="fixed">
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+    <parent link="hole4"/>
+    <child link="hole5"/>
+  </joint>
+
+  <link
+    name="hole5">
+    <inertial>
+      <origin
+        xyz="0.051 -0.051 0.0"
+        rpy="0 0 0" />
+      <mass
+        value="5.0" />
+      <inertia
+        ixx="0.003"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.003"
+        iyz="0.0"
+        izz="0.003" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0.051 -0.051 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box 
+	  size="0.051 0.051 0.052" />
+      </geometry>
+      <material
+        name="stainless">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0.051 -0.051 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box 
+	  size="0.051 0.051 0.052" />
+      </geometry>
+    </collision>
+  <gazebo>
+    <static>true</static>
+  </gazebo>
+  </link>
+  <joint name="joint5" type="fixed">
+    <origin xyz="0.0  0.0 0.0" rpy="0 0 0"/>
+    <parent link="hole5"/>
+    <child link="hole6"/>
+  </joint>
+
+  <link
+    name="hole6">
+    <inertial>
+      <origin
+        xyz="0.0 -0.051 0.0"
+        rpy="0 0 0" />
+      <mass
+        value="5.0" />
+      <inertia
+        ixx="0.003"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.003"
+        iyz="0.0"
+        izz="0.003" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0.0 -0.051 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box 
+	  size="0.051 0.051 0.052" />
+      </geometry>
+      <material
+        name="stainless">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0.0 -0.051 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box 
+	  size="0.051 0.051 0.052" />
+      </geometry>
+    </collision>
+  <gazebo>
+    <static>true</static>
+  </gazebo>
+  </link>
+
+  <joint name="joint6" type="fixed">
+    <origin xyz="0.0  0.0 0.0" rpy="0 0 0"/>
+    <parent link="hole6"/>
+    <child link="hole7"/>
+  </joint>
+
+  <link
+    name="hole7">
+    <inertial>
+      <origin
+        xyz="-0.051 -0.051 0.0"
+        rpy="0 0 0" />
+      <mass
+        value="5.0" />
+      <inertia
+        ixx="0.003"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.003"
+        iyz="0.0"
+        izz="0.003" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="-0.051 -0.051 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box 
+	  size="0.051 0.051 0.052" />
+      </geometry>
+      <material
+        name="stainless">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="-0.051 -0.051 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box 
+	  size="0.051 0.051 0.052" />
+      </geometry>
+    </collision>
+  <gazebo>
+    <static>true</static>
+  </gazebo>
+  </link>
+
+  <joint name="joint7" type="fixed">
+    <origin xyz="0.0  0.0 0.0" rpy="0 0 0"/>
+    <parent link="hole7"/>
+    <child link="hole8"/>
+  </joint>
+
+  <link
+    name="hole8">
+    <inertial>
+      <origin
+        xyz="-0.051 0.0 0.0"
+        rpy="0 0 0" />
+      <mass
+        value="5.0" />
+      <inertia
+        ixx="0.003"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.003"
+        iyz="0.0"
+        izz="0.003" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="-0.051 0.0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box 
+	  size="0.051 0.051 0.052" />
+      </geometry>
+      <material
+        name="stainless">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="-0.051 0.0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box 
+	  size="0.051 0.051 0.052" />
+      </geometry>
+    </collision>
+  <gazebo>
+    <static>true</static>
+  </gazebo>
+  </link>
+
+</robot>
