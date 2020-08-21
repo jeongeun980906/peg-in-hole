@@ -7,7 +7,7 @@ import itertools
 import torch
 import time
 
-from con_env6 import UR5_robotiq
+from con_env8 import UR5_robotiq
 
 from collections import deque
 from matplotlib import pyplot as plt
@@ -18,6 +18,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
+import os
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 parser = argparse.ArgumentParser(description='PyTorch Soft Actor-Critic Args')
 parser.add_argument('--env-name', default="Allegro",
@@ -71,12 +74,14 @@ parser.add_argument('--evaluate', type=bool, default=False,
                     help='evaluate (default: False)')
 
 args = parser.parse_args()
+device = torch.device("cuda")
+print(device)
 
-state_size=8
-action_size=3
+state_size=13
+action_size=4
 
-PATH="./saved_model3/model1800.pth"
-actor= torch.load(PATH)
+PATH="./saved_model44/model1600.pth"
+actor= torch.load(PATH).to(device)
 actor.eval()
 
 # Environment
@@ -108,7 +113,7 @@ print(pose)
 def main():
     score = 0.0  
     global_step=0
-    for epi_n in range(1000):
+    for epi_n in range(100):
         state = env.reset()
         #pre_noise=np.zeros(action_size)
         done = False
@@ -117,16 +122,15 @@ def main():
         while not done:
             step += 1
             global_step+=1
-            
-            action = actor(torch.FloatTensor(state))
+            time.sleep(0.1)
+            action,_ = actor(torch.FloatTensor(state).to(device))
+            action=action[0].cpu()
             next_state, reward, done, info= env.step(list(action))
             print('error',info)
             score += reward
             state = next_state
-            if done:
-                env.down(0.02)
-                time.sleep(5)
-                break
+        print(score)
+        time.sleep(3)
         
 
 if __name__ == '__main__':
