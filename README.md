@@ -16,6 +16,7 @@
 * 4 action dim env10
 * ddpg with recurrent cell
 * default control
+![캡처](https://user-images.githubusercontent.com/57895587/96407507-7ec29e00-121c-11eb-964a-c1f063f81385.PNG)
 #### main13 - DDPG with RND, sparse reward
 * 6 action space with new move tool
 * env 9
